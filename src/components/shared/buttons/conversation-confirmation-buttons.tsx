@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { I18nKey } from "#/i18n/declaration";
 import { AgentState } from "#/types/agent-state";
@@ -20,11 +20,16 @@ export function ConversationConfirmationButtons() {
   const addSubmittedEventId = useEventMessageStore(
     (state) => state.addSubmittedEventId,
   );
+  const removeSubmittedEventId = useEventMessageStore(
+    (state) => state.removeSubmittedEventId,
+  );
+  const [failed, setFailed] = useState(false);
 
   const { t } = useTranslation("openhands");
   const { data: conversation } = useActiveConversation();
   const { curAgentState } = useAgentState();
-  const { mutate: respondToConfirmation } = useRespondToConfirmation();
+  const { mutate: respondToConfirmation, isPending } =
+    useRespondToConfirmation();
   const events = useEventStore((state) => state.events);
 
   const awaitingAction = events
@@ -40,6 +45,15 @@ export function ConversationConfirmationButtons() {
       if (!awaitingAction || !conversation) {
         return;
       }
+      if (
+        isPending ||
+        (awaitingAction.id &&
+          useEventMessageStore
+            .getState()
+            .submittedEventIds.includes(awaitingAction.id))
+      )
+        return;
+      setFailed(false);
 
       // Mark event as submitted to prevent duplicate submissions
       if (awaitingAction.id) {
@@ -47,14 +61,29 @@ export function ConversationConfirmationButtons() {
       }
 
       // Call the agent-server API endpoint
-      respondToConfirmation({
-        conversationId: conversation.id,
-        conversationUrl: conversation.conversation_url || "",
-        sessionApiKey: conversation.session_api_key,
-        accept,
-      });
+      respondToConfirmation(
+        {
+          conversationId: conversation.id,
+          conversationUrl: conversation.conversation_url || "",
+          sessionApiKey: conversation.session_api_key,
+          accept,
+        },
+        {
+          onError: () => {
+            if (awaitingAction.id) removeSubmittedEventId(awaitingAction.id);
+            setFailed(true);
+          },
+        },
+      );
     },
-    [awaitingAction, conversation, addSubmittedEventId, respondToConfirmation],
+    [
+      awaitingAction,
+      conversation,
+      addSubmittedEventId,
+      removeSubmittedEventId,
+      respondToConfirmation,
+      isPending,
+    ],
   );
 
   // Handle keyboard shortcuts
@@ -64,14 +93,23 @@ export function ConversationConfirmationButtons() {
     }
 
     const handleCancelShortcut = (event: KeyboardEvent) => {
-      if (event.shiftKey && event.metaKey && event.key === "Backspace") {
+      if (
+        !event.repeat &&
+        event.shiftKey &&
+        (event.metaKey || event.ctrlKey) &&
+        event.key === "Backspace"
+      ) {
         event.preventDefault();
         handleConfirmation(false);
       }
     };
 
     const handleContinueShortcut = (event: KeyboardEvent) => {
-      if (event.metaKey && event.key === "Enter") {
+      if (
+        !event.repeat &&
+        (event.metaKey || event.ctrlKey) &&
+        event.key === "Enter"
+      ) {
         event.preventDefault();
         handleConfirmation(true);
       }
@@ -94,7 +132,8 @@ export function ConversationConfirmationButtons() {
     curAgentState !== AgentState.AWAITING_USER_CONFIRMATION ||
     !awaitingAction ||
     (awaitingAction.id !== undefined &&
-      submittedEventIds.includes(awaitingAction.id))
+      submittedEventIds.includes(awaitingAction.id) &&
+      !isPending)
   ) {
     return null;
   }
@@ -107,7 +146,10 @@ export function ConversationConfirmationButtons() {
   const isHighRisk = risk === SecurityRisk.HIGH;
 
   return (
-    <div className="flex flex-col gap-2 pt-4">
+    <div
+      className="mt-3 flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
+      aria-busy={isPending}
+    >
       {isHighRisk && (
         <RiskAlert
           content={t(I18nKey.CHAT_INTERFACE$HIGH_RISK_WARNING)}
@@ -116,21 +158,28 @@ export function ConversationConfirmationButtons() {
           title={t(I18nKey.COMMON$HIGH_RISK)}
         />
       )}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-3">
         <p className="text-sm font-normal text-foreground">
           {t(I18nKey.CHAT_INTERFACE$USER_ASK_CONFIRMATION)}
         </p>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <ActionTooltip
             type="reject"
+            disabled={isPending}
             onClick={() => handleConfirmation(false)}
           />
           <ActionTooltip
             type="confirm"
+            disabled={isPending}
             onClick={() => handleConfirmation(true)}
           />
         </div>
       </div>
+      {failed && (
+        <p role="alert" className="text-sm text-[var(--oh-status-error)]">
+          {t(I18nKey.APPROVAL$FAILED)}
+        </p>
+      )}
     </div>
   );
 }

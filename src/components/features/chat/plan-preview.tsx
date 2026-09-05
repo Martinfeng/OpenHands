@@ -8,19 +8,10 @@ import { MarkdownRenderer } from "#/components/features/markdown/markdown-render
 import { useHandleBuildPlanClick } from "#/hooks/use-handle-build-plan-click";
 import { cn } from "#/utils/utils";
 import { useSelectConversationTab } from "#/hooks/use-select-conversation-tab";
-import {
-  planComponents,
-  createPlanComponents,
-} from "#/components/features/markdown/plan-components";
+import { planComponents } from "#/components/features/markdown/plan-components";
 import { useScrollContext } from "#/context/scroll-context";
 
 const MAX_CONTENT_LENGTH = 300;
-
-// Shine effect class for streaming text
-const SHINE_TEXT_CLASS = "shine-text";
-
-// Plan components with shine effect applied for streaming state
-const shineComponents = createPlanComponents(SHINE_TEXT_CLASS);
 
 interface PlanPreviewProps {
   /** Raw plan content from PLAN.md file */
@@ -34,7 +25,6 @@ interface PlanPreviewProps {
 /* eslint-disable i18next/no-literal-string */
 export function PlanPreview({
   planContent,
-  isStreaming,
   isBuildDisabled,
 }: PlanPreviewProps) {
   const { t } = useTranslation("openhands");
@@ -95,10 +85,7 @@ export function PlanPreview({
       >
         {truncatedContent && (
           <>
-            <MarkdownRenderer
-              includeStandard
-              components={isStreaming ? shineComponents : planComponents}
-            >
+            <MarkdownRenderer includeStandard components={planComponents}>
               {truncatedContent}
             </MarkdownRenderer>
             {planContent && planContent.length > MAX_CONTENT_LENGTH && (

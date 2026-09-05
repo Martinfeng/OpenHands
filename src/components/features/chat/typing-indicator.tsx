@@ -1,4 +1,4 @@
-import { Trans } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import type { OHEvent } from "#/stores/use-event-store";
 import type { UserRejectObservation } from "#/types/agent-server/core";
 import {
@@ -6,6 +6,7 @@ import {
   isActionEvent,
   isAgentErrorEvent,
   isObservationEvent,
+  isStreamingDeltaEvent,
 } from "#/types/agent-server/type-guards";
 import {
   getACPToolCallTitleKey,
@@ -16,12 +17,11 @@ import {
   getActionSummaryTitle,
   type EventTitleDescriptor,
 } from "#/components/conversation-events/chat/event-content-helpers/get-action-event-title";
-import { MonoComponent } from "./mono-component";
-import { PathComponent } from "./path-component";
+import { TextShimmer } from "#/components/shared/text-shimmer";
 
 const THINKING_ACTIVITY: EventTitleDescriptor = {
   kind: "translation",
-  key: "ACTION_MESSAGE$THINK",
+  key: "RESPONSE$RESPONDING",
   values: {},
 };
 
@@ -72,12 +72,25 @@ export const deriveLiveActivity = (
 ): EventTitleDescriptor => {
   const resolvedActionIds = new Set<string>();
   const resolvedToolCallIds = new Set<string>();
+  let latest: OHEvent | undefined;
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    if (!events[index].isFromPlanningAgent) {
+      latest = events[index];
+      break;
+    }
+  }
+  const fallback: EventTitleDescriptor =
+    latest && isStreamingDeltaEvent(latest) && latest.content
+      ? { kind: "translation", key: "RESPONSE$REPLYING", values: {} }
+      : THINKING_ACTIVITY;
 
   for (let index = events.length - 1; index >= 0; index -= 1) {
     const event = events[index];
     if (event.isFromPlanningAgent) {
       continue;
     }
+    // A new user turn must never inherit an unresolved tool from an old run.
+    if (event.source === "user") break;
 
     if (isObservationEvent(event) || isUserRejectObservation(event)) {
       resolvedActionIds.add(event.action_id);
@@ -120,7 +133,7 @@ export const deriveLiveActivity = (
     }
   }
 
-  return THINKING_ACTIVITY;
+  return fallback;
 };
 
 interface TypingIndicatorProps {
@@ -128,34 +141,28 @@ interface TypingIndicatorProps {
 }
 
 export function TypingIndicator({ events }: TypingIndicatorProps) {
+  const { t } = useTranslation("openhands");
   const activity = deriveLiveActivity(events);
+  const title =
+    activity.kind === "text"
+      ? activity.text
+      : t(activity.key, activity.values).replace(/<\/?(?:path|cmd)>/g, "");
 
   return (
     <div
-      className="flex min-w-0 max-w-full items-center gap-2 rounded-full border border-[var(--oh-border)] bg-[var(--oh-surface)] px-3 py-1.5 text-xs text-[var(--oh-text-secondary)]"
+      className="sticky top-0 z-10 min-w-0 bg-base py-2 text-sm font-medium"
       data-testid="live-activity-chip"
       role="status"
       aria-live="polite"
     >
-      <span
-        aria-hidden="true"
-        className="size-1.5 shrink-0 animate-pulse rounded-full bg-[var(--oh-status-success)] motion-reduce:animate-none"
-      />
-      <span className="min-w-0 truncate">
-        {activity.kind === "text" ? (
-          activity.text
-        ) : (
-          <Trans
-            ns="openhands"
-            i18nKey={activity.key}
-            values={activity.values}
-            components={{
-              path: <PathComponent />,
-              cmd: <MonoComponent />,
-            }}
-          />
-        )}
-      </span>
+      <TextShimmer
+        as="span"
+        duration={2.6}
+        className="max-w-full truncate align-middle"
+        title={title}
+      >
+        {title}
+      </TextShimmer>
     </div>
   );
 }

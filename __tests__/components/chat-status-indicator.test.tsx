@@ -14,35 +14,25 @@ describe("ChatStatusIndicator", () => {
       <ChatStatusIndicator
         status="Waiting for runtime"
         statusColor="#FFD600"
-      />
+      />,
     );
 
-    expect(
-      screen.getByTestId("chat-status-indicator"),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("chat-status-indicator")).toBeInTheDocument();
     expect(screen.getByText("Waiting for runtime")).toBeInTheDocument();
   });
 
-  it("passes the statusColor to the DebugStackframeDot icon", () => {
-    render(
-      <ChatStatusIndicator
-        status="Error"
-        statusColor="#FF684E"
-      />
-    );
+  it("reports status without a decorative dot", () => {
+    render(<ChatStatusIndicator status="Error" statusColor="#FF684E" />);
 
-    const icon = screen.getByTestId("debug-stackframe-dot");
-    expect(icon).toHaveAttribute("color", "#FF684E");
+    expect(screen.getByRole("status")).toHaveTextContent("Error");
+    expect(
+      screen.queryByTestId("debug-stackframe-dot"),
+    ).not.toBeInTheDocument();
   });
 
-  it("renders the DebugStackframeDot icon", () => {
-    render(
-      <ChatStatusIndicator
-        status="Loading"
-        statusColor="#FFD600"
-      />
-    );
+  it("renders loading as readable static text", () => {
+    render(<ChatStatusIndicator status="Loading" statusColor="#FFD600" />);
 
-    expect(screen.getByTestId("debug-stackframe-dot")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Loading");
   });
 });

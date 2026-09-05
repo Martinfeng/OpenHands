@@ -6,9 +6,10 @@ import { StyledTooltip } from "./buttons/styled-tooltip";
 interface ActionTooltipProps {
   type: "confirm" | "reject";
   onClick: () => void;
+  disabled?: boolean;
 }
 
-export function ActionTooltip({ type, onClick }: ActionTooltipProps) {
+export function ActionTooltip({ type, onClick, disabled }: ActionTooltipProps) {
   const { t } = useTranslation("openhands");
 
   const isConfirm = type === "confirm";
@@ -23,7 +24,7 @@ export function ActionTooltip({ type, onClick }: ActionTooltipProps) {
 
   const buttonLabel = isConfirm
     ? `${t(I18nKey.CHAT_INTERFACE$INPUT_CONTINUE_MESSAGE)} ⌘↩`
-    : `${t(I18nKey.BUTTON$CANCEL)} ⇧⌘⌫`;
+    : `${t(I18nKey.ACTION$REJECT)} ⇧⌘⌫`;
 
   return (
     <StyledTooltip closeDelay={100} content={content}>
@@ -31,11 +32,12 @@ export function ActionTooltip({ type, onClick }: ActionTooltipProps) {
         data-testid={`action-${type}-button`}
         type="button"
         aria-label={ariaLabel}
+        disabled={disabled}
         className={cn(
-          "rounded px-2 h-6.5 text-sm font-normal leading-5 cursor-pointer hover:opacity-80",
+          "rounded-lg px-3 h-8 text-sm font-medium leading-5 cursor-pointer hover:opacity-90 disabled:cursor-wait disabled:opacity-50",
           type === "confirm"
-            ? "bg-tertiary text-foreground"
-            : "bg-white text-base",
+            ? "bg-primary text-[var(--oh-accent-foreground)]"
+            : "border border-border bg-base text-foreground",
         )}
         onClick={onClick}
       >

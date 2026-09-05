@@ -165,7 +165,7 @@ describe("EventGroup", () => {
     expect(screen.queryByTestId("status-icon")).not.toBeInTheDocument();
   });
 
-  it("shows a spinner while running and no status icon when done", () => {
+  it("keeps tool groups free of decorative animation while running and done", () => {
     const running = [
       makeBashObservation("o1", "a1", "ls"),
       makeBashAction("a2", "pwd"),
@@ -176,7 +176,7 @@ describe("EventGroup", () => {
         <div>child</div>
       </EventGroup>,
     );
-    expect(screen.getByTestId("spinner-icon")).toBeInTheDocument();
+    expect(screen.queryByTestId("spinner-icon")).not.toBeInTheDocument();
     expect(screen.queryByTestId("status-icon")).not.toBeInTheDocument();
 
     const done = [

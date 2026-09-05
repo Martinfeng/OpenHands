@@ -8,6 +8,7 @@ import { ThoughtEventMessage } from "./event-message-components/thought-event-me
 import { useModelStore } from "#/stores/model-store";
 import { ModelMessages } from "#/components/features/chat/model-messages";
 import { useOptionalConversationId } from "#/hooks/use-conversation-id";
+import { TypingIndicator } from "#/components/features/chat/typing-indicator";
 // TODO: Implement microagent functionality for V1 when APIs support V1 event IDs
 // import { AgentState } from "#/types/agent-state";
 // import MemoryIcon from "#/icons/memory_icon.svg?react";
@@ -15,13 +16,14 @@ import { useOptionalConversationId } from "#/hooks/use-conversation-id";
 interface MessagesProps {
   messages: OpenHandsEvent[]; // UI events (actions replaced by observations)
   allEvents: OpenHandsEvent[]; // Full event history (for action lookup)
+  isResponding?: boolean;
 }
 
 const getLastEventId = (events: OpenHandsEvent[]) => events.at(-1)?.id;
 const getLastEvent = (events: OpenHandsEvent[]) => events.at(-1);
 
 export const Messages: React.FC<MessagesProps> = React.memo(
-  ({ messages, allEvents }) => {
+  ({ messages, allEvents, isResponding = false }) => {
     const { conversationId } = useOptionalConversationId();
     // Get the set of event IDs that should render PlanPreview
     // This ensures only one preview per user message "phase"
@@ -61,6 +63,16 @@ export const Messages: React.FC<MessagesProps> = React.memo(
       () => groupEvents(messages, undefined, allEvents),
       [messages, allEvents],
     );
+    let lastUserIndex = messages.length - 1;
+    while (lastUserIndex >= 0 && messages[lastUserIndex].source !== "user")
+      lastUserIndex -= 1;
+    const responseIndex = renderedItems.findIndex(
+      (item) =>
+        (item.kind === "group" ? item.startIndex : item.index) > lastUserIndex,
+    );
+    const responseTitle = isResponding ? (
+      <TypingIndicator events={allEvents} />
+    ) : null;
 
     const renderEventMessage = (
       event: OpenHandsEvent,
@@ -84,6 +96,7 @@ export const Messages: React.FC<MessagesProps> = React.memo(
           if (item.kind === "single") {
             return (
               <React.Fragment key={`single-${item.event.id}`}>
+                {itemIndex === responseIndex && responseTitle}
                 {/* Thoughts for singles are also hoisted as their own
                     "thought" item, so suppress the inline render to avoid
                     duplication. */}
@@ -96,6 +109,7 @@ export const Messages: React.FC<MessagesProps> = React.memo(
           if (item.kind === "thought") {
             return (
               <React.Fragment key={`thought-${item.action.id}`}>
+                {itemIndex === responseIndex && responseTitle}
                 <ThoughtEventMessage event={item.action} />
                 {maybeRenderModelMessages(item.action.id)}
               </React.Fragment>
@@ -110,6 +124,7 @@ export const Messages: React.FC<MessagesProps> = React.memo(
           const groupKey = item.events[0]?.id ?? `group-${item.startIndex}`;
           return (
             <React.Fragment key={`group-${groupKey}`}>
+              {itemIndex === responseIndex && responseTitle}
               <EventGroup
                 events={item.events}
                 allEvents={allEvents}
@@ -127,10 +142,12 @@ export const Messages: React.FC<MessagesProps> = React.memo(
             </React.Fragment>
           );
         })}
+        {responseIndex === -1 && responseTitle}
       </>
     );
   },
   (prevProps, nextProps) =>
+    prevProps.isResponding === nextProps.isResponding &&
     prevProps.messages.length === nextProps.messages.length &&
     prevProps.allEvents.length === nextProps.allEvents.length &&
     getLastEventId(prevProps.messages) === getLastEventId(nextProps.messages) &&

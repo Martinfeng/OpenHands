@@ -174,7 +174,7 @@ export const useTerminal = () => {
   }, []);
 
   React.useEffect(() => {
-    if (terminal.current && ref.current) {
+    if (terminal.current?.options && ref.current) {
       terminal.current.options.theme = {
         ...terminal.current.options.theme,
         foreground: resolveTerminalForeground(ref.current),

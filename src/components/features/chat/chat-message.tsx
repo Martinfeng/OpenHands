@@ -5,7 +5,6 @@ import { CopyToClipboardButton } from "#/components/shared/buttons/copy-to-clipb
 import type { SourceType } from "#/types/agent-server/core/base/common";
 import { StyledTooltip } from "#/components/shared/buttons/styled-tooltip";
 import { I18nKey } from "#/i18n/declaration";
-import { TextShimmer } from "#/components/shared/text-shimmer";
 import { MarkdownRenderer } from "../markdown/markdown-renderer";
 import { PendingStopIcon } from "./pending-stop-icon";
 import {
@@ -279,17 +278,14 @@ export function ChatMessage({
       <div className="flex w-full max-w-full flex-col last:mb-4">
         {messageBubble}
         <div className="my-1 w-full py-1 text-sm">
-          <TextShimmer
-            as="p"
+          <p
             role="status"
             aria-live="polite"
             data-testid="chat-message-sending"
             className="block w-full text-sm font-normal"
-            duration={1}
-            spread={2}
           >
             {t(I18nKey.CHAT_INTERFACE$MESSAGE_SENDING)}
-          </TextShimmer>
+          </p>
         </div>
       </div>
     );

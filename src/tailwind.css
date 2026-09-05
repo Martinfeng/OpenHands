@@ -678,6 +678,12 @@ button.extension-module-card-interactive {
 .canvas-markdown blockquote { border-left-width: 2px; border-radius: 0 8px 8px 0; }
 
 @media (prefers-reduced-motion: reduce) {
+  .oh-text-shimmer {
+    background: none !important;
+    color: var(--oh-muted) !important;
+    -webkit-text-fill-color: var(--oh-muted) !important;
+    animation: none !important;
+  }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

@@ -15,7 +15,6 @@ import { AgentState } from "#/types/agent-state";
 import { useFilteredEvents } from "#/hooks/use-filtered-events";
 import { useScrollToBottom } from "#/hooks/use-scroll-to-bottom";
 import { useLoadOlderEvents } from "#/hooks/use-load-older-events";
-import { TypingIndicator } from "./typing-indicator";
 import { ChatSuggestions } from "./chat-suggestions";
 import { ScrollProvider } from "#/context/scroll-context";
 import { useInitialQueryStore } from "#/stores/initial-query-store";
@@ -550,6 +549,12 @@ export function ChatInterface() {
             <Messages
               messages={renderableEvents}
               allEvents={allConversationEvents}
+              isResponding={
+                curAgentState === AgentState.RUNNING &&
+                conversationWebSocket?.connectionState === "OPEN" &&
+                !errorMessage &&
+                !isChatLoading
+              }
             />
           )}
 
@@ -628,13 +633,7 @@ export function ChatInterface() {
                     <div className="absolute left-1/2 transform -translate-x-1/2 bottom-0 pointer-events-auto">
                       <ScrollToBottomButton onClick={scrollDomToBottom} />
                     </div>
-                  ) : (
-                    curAgentState === AgentState.RUNNING && (
-                      <div className="pointer-events-none absolute inset-x-9 bottom-0 flex justify-center">
-                        <TypingIndicator events={allConversationEvents} />
-                      </div>
-                    )
-                  )}
+                  ) : null}
                 </div>
               </div>
 

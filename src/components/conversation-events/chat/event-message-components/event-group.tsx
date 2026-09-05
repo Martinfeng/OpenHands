@@ -1,6 +1,5 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { LoaderCircle } from "lucide-react";
 import ArrowDown from "#/icons/angle-down-solid.svg?react";
 import ArrowUp from "#/icons/angle-up-solid.svg?react";
 import { OpenHandsEvent, ActionEvent } from "#/types/agent-server/core";
@@ -135,12 +134,6 @@ export function EventGroup({
             </span>
             <span className="flex items-center flex-shrink-0 font-normal text-[var(--oh-muted)]">
               <span className="truncate">{countSummary}</span>
-              {isRunning ? (
-                <LoaderCircle
-                  data-testid="spinner-icon"
-                  className="h-4 w-4 ml-2 inline animate-spin text-[var(--oh-muted)]"
-                />
-              ) : null}
             </span>
           </>
         )}

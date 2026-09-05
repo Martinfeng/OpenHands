@@ -199,7 +199,11 @@ export function MarkdownRenderer({
   // Only KaTeX may produce the required MathML and inline layout styles.
   const rehypePlugins: PluggableList = [
     ...(allowHtml ? [rehypeRaw] : []),
-    [rehypeSanitize, agentOutput ? mathSchema : MARKDOWN_SANITIZE_SCHEMA],
+    ...(allowHtml || agentOutput
+      ? ([
+          [rehypeSanitize, agentOutput ? mathSchema : MARKDOWN_SANITIZE_SCHEMA],
+        ] as PluggableList)
+      : []),
     ...(agentOutput
       ? ([
           [

@@ -98,6 +98,47 @@ const makeACPEvent = (
 });
 
 describe("deriveLiveActivity", () => {
+  it("uses actual body deltas for replying and never infers streaming from complete text", () => {
+    const delta: OHEvent = {
+      id: "delta",
+      timestamp: "2026-09-05T00:00:00Z",
+      kind: "StreamingDeltaEvent",
+      source: "agent",
+      content: "hello",
+      reasoning_content: null,
+    };
+    expect(deriveLiveActivity([delta])).toMatchObject({
+      key: "RESPONSE$REPLYING",
+    });
+    expect(
+      deriveLiveActivity([
+        { ...delta, content: null, reasoning_content: "thinking" },
+      ]),
+    ).toMatchObject({ key: "RESPONSE$RESPONDING" });
+  });
+  it("does not carry a pending action across a new user turn", () => {
+    const pending = makeActionEvent("1", {
+      kind: "TerminalAction",
+      command: "pwd",
+      is_input: false,
+      timeout: null,
+      reset: false,
+    });
+    const user: OHEvent = {
+      id: "new-user",
+      timestamp: "2026-09-05T00:00:01Z",
+      source: "user",
+      llm_message: {
+        role: "user",
+        content: [{ type: "text", text: "new task" }],
+      },
+      activated_microagents: [],
+      extended_content: [],
+    };
+    expect(deriveLiveActivity([pending, user])).toMatchObject({
+      key: "RESPONSE$RESPONDING",
+    });
+  });
   it.each([
     {
       name: "terminal command",
@@ -182,7 +223,7 @@ describe("deriveLiveActivity", () => {
       deriveLiveActivity([first, second, secondObservation, firstObservation]),
     ).toEqual({
       kind: "translation",
-      key: "ACTION_MESSAGE$THINK",
+      key: "RESPONSE$RESPONDING",
       values: {},
     });
   });
@@ -200,7 +241,7 @@ describe("deriveLiveActivity", () => {
       deriveLiveActivity([rejected, makeUserRejectObservation("2", rejected)]),
     ).toEqual({
       kind: "translation",
-      key: "ACTION_MESSAGE$THINK",
+      key: "RESPONSE$RESPONDING",
       values: {},
     });
   });
@@ -252,7 +293,7 @@ describe("deriveLiveActivity", () => {
         deriveLiveActivity([started, makeACPEvent("acp-read", terminalStatus)]),
       ).toEqual({
         kind: "translation",
-        key: "ACTION_MESSAGE$THINK",
+        key: "RESPONSE$RESPONDING",
         values: {},
       });
     },
@@ -277,17 +318,17 @@ describe("deriveLiveActivity", () => {
 
     expect(deriveLiveActivity([unsupported])).toEqual({
       kind: "translation",
-      key: "ACTION_MESSAGE$THINK",
+      key: "RESPONSE$RESPONDING",
       values: {},
     });
     expect(deriveLiveActivity([planningOnly])).toEqual({
       kind: "translation",
-      key: "ACTION_MESSAGE$THINK",
+      key: "RESPONSE$RESPONDING",
       values: {},
     });
     expect(deriveLiveActivity([])).toEqual({
       kind: "translation",
-      key: "ACTION_MESSAGE$THINK",
+      key: "RESPONSE$RESPONDING",
       values: {},
     });
   });
