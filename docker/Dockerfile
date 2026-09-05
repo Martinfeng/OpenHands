@@ -42,8 +42,12 @@ COPY . .
 # Canvas under the Cloud subpath instead of a dedicated hostname.
 ARG VITE_POSTHOG_API_KEY=""
 ARG VITE_BASE_PATH="/canvas"
+ARG VITE_WORKING_DIR=""
+ARG VITE_DO_NOT_TRACK=""
 ENV VITE_POSTHOG_API_KEY=${VITE_POSTHOG_API_KEY}
 ENV VITE_BASE_PATH=${VITE_BASE_PATH}
+ENV VITE_WORKING_DIR=${VITE_WORKING_DIR}
+ENV VITE_DO_NOT_TRACK=${VITE_DO_NOT_TRACK}
 RUN npm run build
 
 # ── Stage 1b: Generate shell-sourceable defaults from config/defaults.json ──
@@ -53,6 +57,8 @@ COPY config/defaults.json /tmp/
 RUN node -e " \
   const c = JSON.parse(require('fs').readFileSync('/tmp/defaults.json','utf-8')); \
   const lines = [ \
+    'CONFIG_AGENT_SERVER_VERSION=' + c.versions.agentServer, \
+    'CONFIG_ACP_CONSTRAINT=' + JSON.stringify(c.constraints.agentClientProtocol), \
     'CONFIG_AGENT_SERVER_PORT=' + c.ports.agentServer, \
     'CONFIG_AUTOMATION_PORT=' + c.ports.automation, \
     'CONFIG_PROXY_PORT=' + c.ports.proxy, \
@@ -71,6 +77,7 @@ RUN node -e " \
 FROM ${AGENT_SERVER_IMAGE} AS final
 
 ARG AUTOMATION_VERSION
+ARG AGENT_SERVER_VERSION=""
 ARG AGENT_SERVER_SDK_GIT_REF=""
 ARG OPENHANDS_BUILD_GIT_SHA=unknown
 ARG OPENHANDS_BUILD_GIT_REF=unknown
@@ -99,12 +106,19 @@ RUN if command -v apt-get >/dev/null 2>&1; then \
       rm -rf /var/lib/apt/lists/*; \
     fi
 
-# Install automation server via pip.
-# Shared deps (openhands-sdk, fastapi, uvicorn, pydantic, httpx, …) are
-# already satisfied by the agent-server base image, so only automation-
-# specific packages (asyncpg, sqlalchemy, boto3, gcloud, …) are added.
-RUN uv pip install --system "openhands-automation==${AUTOMATION_VERSION}" 2>/dev/null \
-    || pip install --no-cache-dir "openhands-automation==${AUTOMATION_VERSION}"
+# Pin the complete Python stack when installing automation. Its transitive
+# dependencies can otherwise replace the base image's agent-server executable
+# with a newer release even when AGENT_SERVER_IMAGE uses a fixed version tag.
+COPY --from=config-gen /tmp/defaults.env /opt/agent-canvas/defaults.env
+RUN . /opt/agent-canvas/defaults.env && \
+    SDK_VERSION="${AGENT_SERVER_VERSION:-${CONFIG_AGENT_SERVER_VERSION}}" && \
+    set -- "openhands-automation==${AUTOMATION_VERSION}" \
+      "openhands-agent-server==${SDK_VERSION}" \
+      "openhands-sdk==${SDK_VERSION}" \
+      "openhands-tools==${SDK_VERSION}" \
+      "openhands-workspace==${SDK_VERSION}" \
+      "${CONFIG_ACP_CONSTRAINT}" && \
+    (uv pip install --system "$@" || pip install --no-cache-dir "$@")
 
 RUN if [ -n "${AGENT_SERVER_SDK_GIT_REF}" ]; then \
       BASE_GIT_URL="git+https://github.com/OpenHands/software-agent-sdk@${AGENT_SERVER_SDK_GIT_REF}" && \
@@ -135,9 +149,6 @@ COPY scripts/runtime-services-info.mjs /opt/agent-canvas/runtime-services-info.m
 # import canvas_ui_tool by qualname. Keep the compatibility module available;
 # new conversations define canvas_ui_control through a JSON client tool.
 COPY tools/ /opt/agent-canvas/tools/
-
-# Copy generated defaults.env (from config/defaults.json via config-gen stage)
-COPY --from=config-gen /tmp/defaults.env /opt/agent-canvas/defaults.env
 
 # Copy the entrypoint
 COPY docker/entrypoint.sh /opt/agent-canvas/entrypoint.sh

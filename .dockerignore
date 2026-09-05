@@ -11,12 +11,14 @@ dist/
 .openhands/
 .agents/
 .pr/
+.tmp/
 
 # Test files
 __tests__/
 tests/
 __mocks__/
 test-results/
+test-results-*/
 playwright-report*/
 coverage/
 
