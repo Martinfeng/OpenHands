@@ -32,10 +32,7 @@ export function CollapsibleThinking({
   const Chevron = expanded ? ArrowUp : ArrowDown;
 
   return (
-    <div
-      className="my-1 w-full py-1 text-sm"
-      data-testid="collapsible-thinking"
-    >
+    <div className="w-full py-1 text-sm" data-testid="collapsible-thinking">
       <button
         type="button"
         onClick={() => setExpanded((prev) => !prev)}

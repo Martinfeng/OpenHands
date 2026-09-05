@@ -148,7 +148,7 @@ export function ChatMessage({
         "rounded-xl relative w-fit max-w-full flex flex-col",
         hasBubbleChildren && "gap-2",
         type === "user" && "mt-6 bg-tertiary self-end px-4 py-2.5",
-        type === "agent" && "mt-6 w-full max-w-full bg-transparent",
+        type === "agent" && "mt-2 w-full max-w-full bg-transparent",
         isFromPlanningAgent &&
           type === "agent" &&
           "border border-[#597ff4] bg-tertiary p-4 mt-2",

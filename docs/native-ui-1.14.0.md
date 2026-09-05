@@ -18,6 +18,7 @@
 
 - 在设置 → Application → Color theme 中选择浅色、深色或跟随系统。独立应用默认跟随系统，偏好保存在 `localStorage["openhands-appearance"]`。Electron 同步原生窗口颜色，并在自身用户目录保存启动外观。
 - 颜色通过语义变量覆盖主要页面、菜单、输入框、弹层、Markdown、代码、Monaco/Diff 和终端。系统字体优先使用 macOS 字体，蓝色用于主要操作与焦点。
+- 同一轮回复采用较紧凑的间距：Agent 文本块上边距为 8px，工具和思考区块保留 4px 内边距并去除重复外边距，配合消息列表的 8px 间隔形成约 12px 的说明到操作间距、约 20px 的操作到下一阶段间距。用户消息保留 24px 上边距，区分不同轮对话；正文行距不变。
 - 嵌入组件仍由 `AgentServerUIProviders` / `AgentServerUIRoot` 的 `theme`、`styleOverrides` 和 `style` 控制，宿主覆盖优先于默认变量；独立应用的本地主题选择不会接管嵌入组件。
 - 回复不加入重复的身份与版本块。流光跟随当前未完成的工具或思考标题，旧标题恢复静态；折叠的工具组由组标题承载唯一流光。正文直接呈现真实增量，不播放流光。只有没有可用活动标题的等待空档，才在消息流中显示临时“思考”，不固定在回复开头或视口底部。等待审批、断线、停止、完成及错误状态不播放流光，系统减少动态效果时显示静态文字。
 - 响应动效的位置规则参考本机 Codex 桌面端实际资源；节奏根据体验反馈放慢并缩短空档：初始延迟约 0.15 秒，每轮 3 秒，扫光持续约 2.4 秒、停顿约 0.6 秒。扫光行程限定在文字两侧，避免大量时间在文字外移动。依据是桌面资源中的 `cadencedShimmer`、`Thinking` / `Running command` / `Editing files` 活动分支；这不是对所有正文施加流光。OpenCode 的 [BasicTool](https://github.com/anomalyco/opencode/blob/dev/packages/session-ui/src/components/basic-tool.tsx) 同样仅在工具 pending/running 时激活标题流光，作为交叉参考。
