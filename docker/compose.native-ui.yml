@@ -21,6 +21,7 @@ services:
       - "0.0.0.0:18800:8000"
     working_dir: /projects
     environment:
+      OH_CANVAS_HTTP_WORKSPACE_COOKIES: "1"
       VITE_DO_NOT_TRACK: "1"
       DO_NOT_TRACK: "1"
     volumes:

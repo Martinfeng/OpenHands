@@ -2,7 +2,8 @@ import { createServer, request, type Server } from "node:http";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { server as mockServer } from "#/mocks/node";
 
 import { parseArgs, startStaticServer } from "../../scripts/static-server.mjs";
 
@@ -105,6 +106,117 @@ describe("static-server.mjs", () => {
       req.end();
     });
   }
+
+  describe("LAN HTTP workspace cookies", () => {
+    // These integration tests require real HTTP streams, including empty 204
+    // responses. Keep the app's API interception out of both proxy hops.
+    beforeAll(() => mockServer.close());
+    afterAll(() => mockServer.listen({ onUnhandledRequest: "bypass" }));
+
+    it.each([
+      {
+        enabled: true,
+        method: "POST",
+        route: "/api/auth/workspace-session",
+        proto: "http",
+        adapted: true,
+      },
+      {
+        enabled: true,
+        method: "DELETE",
+        route: "/api/auth/workspace-session",
+        proto: "http",
+        adapted: true,
+      },
+      {
+        enabled: true,
+        method: "POST",
+        route: "/api/auth/workspace-session",
+        proto: "",
+        adapted: true,
+      },
+      {
+        enabled: false,
+        method: "POST",
+        route: "/api/auth/workspace-session",
+        proto: "http",
+        adapted: false,
+      },
+      {
+        enabled: true,
+        method: "POST",
+        route: "/api/auth/workspace-session",
+        proto: "https",
+        adapted: false,
+      },
+      {
+        enabled: true,
+        method: "POST",
+        route: "/api/auth/workspace-session",
+        proto: "https, http",
+        adapted: false,
+      },
+      {
+        enabled: true,
+        method: "POST",
+        route: "/api/settings",
+        proto: "http",
+        adapted: false,
+      },
+    ])(
+      "preserves cookie scope with $enabled / $method / $route / $proto",
+      async ({ enabled, method, route, proto, adapted }) => {
+        const original =
+          "oh_workspace_session_key=test-key; HttpOnly; Max-Age=42; Path=/api/conversations; SameSite=None; Secure; Partitioned";
+        const unrelated =
+          "other_session=unchanged; HttpOnly; SameSite=None; Secure";
+        const upstream = await startHttpServer(
+          createServer((_req, res) => {
+            res.writeHead(204, { "Set-Cookie": [original, unrelated] });
+            res.end();
+          }),
+        );
+        const dir = mkdtempSync(path.join(tmpdir(), "canvas-cookie-test-"));
+        tempDirs.push(dir);
+        const baseUrl = await startServer(dir, {
+          routes: { "/api": upstream },
+          httpWorkspaceCookies: enabled,
+        });
+        const response = await new Promise<{
+          status: number;
+          cookies: string[];
+        }>((resolve, reject) => {
+          const req = request(
+            `${baseUrl}${route}`,
+            {
+              method,
+              headers: {
+                ...(proto ? { "X-Forwarded-Proto": proto } : {}),
+              },
+            },
+            (res) => {
+              res.resume();
+              res.on("end", () =>
+                resolve({
+                  status: res.statusCode ?? 0,
+                  cookies: res.headers["set-cookie"] ?? [],
+                }),
+              );
+            },
+          );
+          req.on("error", reject);
+          req.end();
+        });
+        expect(response.status).toBe(204);
+        expect(response.cookies).toEqual([
+          adapted
+            ? "oh_workspace_session_key=test-key; HttpOnly; Max-Age=42; Path=/api/conversations; SameSite=Lax"
+            : original,
+          unrelated,
+        ]);
+      },
+    );
+  });
 
   describe("parseArgs", () => {
     it("defaults sessionApiKey to null", () => {

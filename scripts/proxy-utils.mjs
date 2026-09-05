@@ -45,7 +45,8 @@ function parseBackendUrl(backendUrl) {
   }
   return {
     hostname: url.hostname,
-    port: Number.parseInt(url.port, 10) || (url.protocol === "https:" ? 443 : 80),
+    port:
+      Number.parseInt(url.port, 10) || (url.protocol === "https:" ? 443 : 80),
     protocol: url.protocol,
   };
 }
@@ -207,6 +208,7 @@ export function createProxyHandlers({
   label = "proxy",
   timeout = DEFAULT_PROXY_TIMEOUT_MS,
   proxyTimeout = DEFAULT_PROXY_TIMEOUT_MS,
+  httpWorkspaceCookies = false,
 } = {}) {
   const proxy = createProxyServer({
     ws: true,
@@ -222,6 +224,39 @@ export function createProxyHandlers({
     totalWebSockets: 0,
     totalErrors: 0,
   };
+
+  // Agent Server 1.42.1 issues SameSite=None even over LAN HTTP, where
+  // browsers reject it without Secure. This explicit local-stack option
+  // supports same-site previews while preserving the backend cookie's
+  // value, HttpOnly flag, path and lifetime. HTTPS keeps its original cookie.
+  if (httpWorkspaceCookies) {
+    proxy.on("proxyRes", (proxyRes, req) => {
+      const pathname = (req.url ?? "").split("?")[0];
+      const forwardedProto = String(req.headers["x-forwarded-proto"] ?? "")
+        .split(",")[0]
+        .trim()
+        .toLowerCase();
+      if (
+        pathname !== "/api/auth/workspace-session" ||
+        req.socket.encrypted ||
+        (forwardedProto && forwardedProto !== "http")
+      ) {
+        return;
+      }
+      const cookies = proxyRes.headers["set-cookie"];
+      if (!cookies) return;
+      proxyRes.headers["set-cookie"] = cookies.map((cookie) => {
+        if (!cookie.startsWith("oh_workspace_session_key=")) return cookie;
+        const attributes = cookie.split(";").filter((part, index) => {
+          if (index === 0) return true;
+          return !/^(?:secure|partitioned|samesite)(?:\s*=|$)/i.test(
+            part.trim(),
+          );
+        });
+        return `${attributes.join(";")}; SameSite=Lax`;
+      });
+    });
+  }
 
   proxy.on("error", (err, _req, resOrSocket, target) => {
     metrics.totalErrors += 1;

@@ -16,6 +16,8 @@
 
 外观在 Settings → Application → Color theme 中切换。数据图表来自 Agent 回复中的 Markdown 表格。
 
+此部署启用 `OH_CANVAS_HTTP_WORKSPACE_COOKIES=1`：针对 Agent Server 1.42.1 在局域网 HTTP 下返回的 `SameSite=None` 工作区 Cookie，入口代理改用 `SameSite=Lax` 并去除 `Secure` / `Partitioned`，使 HTML、图片和 PDF 预览能正常鉴权。Cookie 的值、HttpOnly、路径与有效期保持原样；HTTPS 响应及其他接口、Cookie 不做转换。该选项仅用于同站点的 HTTP 测试部署。
+
 ## 管理
 
 在仓库根目录执行：

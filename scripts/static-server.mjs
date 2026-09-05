@@ -86,6 +86,7 @@ export function parseArgs(argv = process.argv.slice(2)) {
     rejectPrefixes: [],
     sessionApiKey: null,
     authRequired: false,
+    httpWorkspaceCookies: process.env.OH_CANVAS_HTTP_WORKSPACE_COOKIES === "1",
     runtimeServicesInfo: null,
     lockToCloud: null,
     basePath: "/",
@@ -216,6 +217,11 @@ OPTIONS:
                                may be repeated. Useful in --frontend-only
                                mode to cleanly reject API paths.
   -h, --help                   Show this help
+
+ENVIRONMENT:
+  OH_CANVAS_HTTP_WORKSPACE_COOKIES=1
+                               Adapt workspace cookies for same-site LAN HTTP
+                               previews. HTTPS cookies remain unchanged.
 
 ROUTING:
   • Routes are matched by longest prefix first (most-specific wins).
@@ -542,7 +548,10 @@ async function handleStatic(
 
 export function startStaticServer(config) {
   const route = createRouter(config.routes);
-  const proxy = createProxyHandlers({ label: `static:${config.port}` });
+  const proxy = createProxyHandlers({
+    label: `static:${config.port}`,
+    httpWorkspaceCookies: config.httpWorkspaceCookies,
+  });
   const dirAbs = resolve(config.dir);
   const injectionOpts = {
     sessionApiKey: config.sessionApiKey || null,
