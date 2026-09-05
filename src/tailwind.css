@@ -668,6 +668,15 @@ button.extension-module-card-interactive {
   --tw-prose-quote-borders: var(--oh-border);
 }
 
+.canvas-markdown { line-height: 1.75; overflow-wrap: anywhere; }
+.canvas-markdown > :first-child { margin-top: 0; }
+.canvas-markdown pre { max-width: 100%; white-space: pre; overflow: auto; }
+.canvas-markdown pre code { background: transparent; border: 0; padding: 0; }
+.canvas-markdown .katex-display { overflow-x: auto; overflow-y: hidden; padding: 0.6em 0; }
+.canvas-markdown table { font-variant-numeric: tabular-nums; }
+.canvas-markdown tbody tr:hover { background: var(--oh-interactive-hover-low); }
+.canvas-markdown blockquote { border-left-width: 2px; border-radius: 0 8px 8px 0; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

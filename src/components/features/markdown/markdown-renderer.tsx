@@ -1,6 +1,9 @@
 import Markdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import type { Schema } from "hast-util-sanitize";
@@ -14,6 +17,7 @@ import { table, th, td } from "./table";
 import { blockquote } from "./blockquote";
 import { hr } from "./horizontal-rule";
 import { remarkGithubAlerts } from "./remark-github-alerts";
+import { DataTable } from "./data-table";
 
 // Build a sanitize schema that extends rehype-sanitize's defaults with a
 // few markdown-friendly additions. The defaults strip `<script>`, event
@@ -86,6 +90,8 @@ export const MARKDOWN_SANITIZE_SCHEMA: Schema = {
 };
 
 interface MarkdownRendererProps {
+  /** Enhance only content the agent has already emitted. */
+  agentOutput?: boolean;
   /**
    * The markdown content to render. Can be passed as children (string) or content prop.
    */
@@ -138,6 +144,7 @@ export function MarkdownRenderer({
   includeStandard = false,
   includeHeadings = false,
   allowHtml = true,
+  agentOutput = false,
 }: MarkdownRendererProps) {
   // Build the components object with defaults and optional additions
   const components: Components = {
@@ -146,7 +153,7 @@ export function MarkdownRenderer({
     ol,
     li,
     hr,
-    table,
+    table: agentOutput ? DataTable : table,
     th,
     td,
     blockquote,
@@ -171,15 +178,54 @@ export function MarkdownRenderer({
   // tree. `rehype-sanitize` then strips anything dangerous (scripts,
   // event handlers, `javascript:` URLs, etc.). The order matters: sanitize
   // must run *after* raw so it sees the parsed HTML nodes.
-  const rehypePlugins: PluggableList | undefined = allowHtml
-    ? [rehypeRaw, [rehypeSanitize, MARKDOWN_SANITIZE_SCHEMA]]
-    : undefined;
+  const mathSchema: Schema = {
+    ...MARKDOWN_SANITIZE_SCHEMA,
+    attributes: {
+      ...MARKDOWN_SANITIZE_SCHEMA.attributes,
+      "*": (MARKDOWN_SANITIZE_SCHEMA.attributes?.["*"] ?? []).filter(
+        (attribute) => attribute !== "className",
+      ),
+      code: [["className", /^language-[\w-]+$/, "math-inline", "math-display"]],
+      blockquote: [
+        [
+          "className",
+          "markdown-alert",
+          /^markdown-alert-(note|tip|important|warning|caution)$/,
+        ],
+      ],
+    },
+  };
+  // Sanitize untrusted HTML and a limited set of math markers BEFORE KaTeX.
+  // Only KaTeX may produce the required MathML and inline layout styles.
+  const rehypePlugins: PluggableList = [
+    ...(allowHtml ? [rehypeRaw] : []),
+    [rehypeSanitize, agentOutput ? mathSchema : MARKDOWN_SANITIZE_SCHEMA],
+    ...(agentOutput
+      ? ([
+          [
+            rehypeKatex,
+            {
+              trust: false,
+              strict: "warn",
+              maxExpand: 1000,
+              maxSize: 20,
+              errorColor: "#b54747",
+            },
+          ],
+        ] as PluggableList)
+      : []),
+  ];
 
   return (
-    <div data-testid="markdown-renderer">
+    <div data-testid="markdown-renderer" className="canvas-markdown min-w-0">
       <Markdown
         components={components}
-        remarkPlugins={[remarkGithubAlerts, remarkGfm, remarkBreaks]}
+        remarkPlugins={[
+          remarkGithubAlerts,
+          remarkGfm,
+          remarkBreaks,
+          ...(agentOutput ? [remarkMath] : []),
+        ]}
         rehypePlugins={rehypePlugins}
       >
         {markdownContent}

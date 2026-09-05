@@ -129,6 +129,7 @@ export function ChatMessage({
         includeStandard
         includeHeadings
         allowHtml={type !== "user"}
+        agentOutput={type === "agent"}
         components={chatBubbleMarkdownComponents}
       >
         {message}
