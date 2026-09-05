@@ -9,8 +9,6 @@ import { cn } from "#/utils/utils";
 const SHIMMER_BACKGROUND_SIZE = "200%";
 /** Gradient period as a percentage of the (oversized) background image. */
 const SHIMMER_PERIOD = 100;
-/** Shifting background-position by one period == 2 * period (image is 2x wide). */
-const SHIMMER_TRAVEL = 200;
 
 export type TextShimmerProps = {
   children: React.ReactNode;
@@ -24,7 +22,7 @@ function TextShimmerComponent({
   children,
   as: Component = "p",
   className,
-  duration = 4,
+  duration = 3,
   spread = 12,
   style,
   ...rest
@@ -38,6 +36,11 @@ function TextShimmerComponent({
     () => Math.min(SHIMMER_PERIOD / 2 - 1, 1 + spread / 2),
     [spread],
   );
+  // With a 2x background, 100% puts the highlight center at the left edge
+  // and 0% puts it at the right. Start/end just outside those edges so the
+  // sweep spends its time crossing the text, rather than travelling offscreen.
+  const sweepStart = 100 + bandHalfWidth * 2;
+  const sweepEnd = -bandHalfWidth * 2;
 
   const shimmerStyle = useMemo(() => {
     const center = SHIMMER_PERIOD / 2;
@@ -47,15 +50,15 @@ function TextShimmerComponent({
       backgroundImage: `linear-gradient(105deg, var(--oh-muted) 0%, var(--oh-muted) ${center - bandHalfWidth}%, var(--oh-foreground) ${center}%, var(--oh-muted) ${center + bandHalfWidth}%, var(--oh-muted) 100%)`,
       backgroundSize: `${SHIMMER_BACKGROUND_SIZE} 100%`,
       backgroundRepeat: "no-repeat",
-      backgroundPosition: `${SHIMMER_TRAVEL}% center`,
+      backgroundPosition: `${sweepStart}% center`,
       WebkitBackgroundClip: "text",
       backgroundClip: "text",
       color: "transparent",
       WebkitTextFillColor: "transparent",
       animation: `${animationName} ${duration}s linear infinite`,
-      animationDelay: "0.6s",
+      animationDelay: "0.15s",
     } as React.CSSProperties;
-  }, [animationName, bandHalfWidth, duration, style]);
+  }, [animationName, bandHalfWidth, duration, style, sweepStart]);
 
   if (reduceMotion) {
     return (
@@ -73,7 +76,7 @@ function TextShimmerComponent({
     <>
       <style
         dangerouslySetInnerHTML={{
-          __html: `@keyframes ${animationName}{0%{background-position:${SHIMMER_TRAVEL}% center}25%,100%{background-position:-${SHIMMER_TRAVEL}% center}}`,
+          __html: `@keyframes ${animationName}{0%{background-position:${sweepStart}% center}80%,100%{background-position:${sweepEnd}% center}}`,
         }}
       />
       <Component

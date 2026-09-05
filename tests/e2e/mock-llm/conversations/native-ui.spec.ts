@@ -103,7 +103,7 @@ test.describe("native UI with Agent Server 1.42.1", () => {
         await page
           .locator(".oh-text-shimmer")
           .evaluate((el) => getComputedStyle(el).animationDuration),
-      ).toBe("4s");
+      ).toBe("3s");
       await expect(page.getByTestId("live-activity-chip")).toContainText(
         "NATIVE_UI_TOOL_OK",
       );

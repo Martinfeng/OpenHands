@@ -20,7 +20,7 @@
 - 颜色通过语义变量覆盖主要页面、菜单、输入框、弹层、Markdown、代码、Monaco/Diff 和终端。系统字体优先使用 macOS 字体，蓝色用于主要操作与焦点。
 - 嵌入组件仍由 `AgentServerUIProviders` / `AgentServerUIRoot` 的 `theme`、`styleOverrides` 和 `style` 控制，宿主覆盖优先于默认变量；独立应用的本地主题选择不会接管嵌入组件。
 - 回复不加入重复的身份与版本块。流光跟随当前未完成的工具或思考标题，旧标题恢复静态；折叠的工具组由组标题承载唯一流光。正文直接呈现真实增量，不播放流光。只有没有可用活动标题的等待空档，才在消息流中显示临时“思考”，不固定在回复开头或视口底部。等待审批、断线、停止、完成及错误状态不播放流光，系统减少动态效果时显示静态文字。
-- 响应动效按本机 Codex 桌面端实际资源修订：当前活动标题采用灰阶扫光，初始延迟约 0.6 秒，每 4 秒扫光一次，扫光持续约 1 秒。依据是桌面资源中的 `cadencedShimmer`、`Thinking` / `Running command` / `Editing files` 活动分支；这不是对所有正文施加流光。OpenCode 的 [BasicTool](https://github.com/anomalyco/opencode/blob/dev/packages/session-ui/src/components/basic-tool.tsx) 同样仅在工具 pending/running 时激活标题流光，作为交叉参考。
+- 响应动效的位置规则参考本机 Codex 桌面端实际资源；节奏根据体验反馈放慢并缩短空档：初始延迟约 0.15 秒，每轮 3 秒，扫光持续约 2.4 秒、停顿约 0.6 秒。扫光行程限定在文字两侧，避免大量时间在文字外移动。依据是桌面资源中的 `cadencedShimmer`、`Thinking` / `Running command` / `Editing files` 活动分支；这不是对所有正文施加流光。OpenCode 的 [BasicTool](https://github.com/anomalyco/opencode/blob/dev/packages/session-ui/src/components/basic-tool.tsx) 同样仅在工具 pending/running 时激活标题流光，作为交叉参考。
 - 审批继续使用现有确认接口，支持同意、拒绝及键盘快捷键。提交期间禁止重复提交；失败后保留审批入口，可重新操作。失败提示与会话及待审批事件绑定。
 - Markdown 保留 GFM、原有代码高亮及 HTML 清洗。Agent 公式通过受限清洗后交给 KaTeX，`trust: false`；错误公式保留可读内容。
 - Agent 的 Markdown 表格默认展示原表，可切换折线、柱状、散点图和展开视图。图表仅从表格解析结果生成，不执行消息中的 JavaScript 或任意图表配置，不读取文件或导入数据。
