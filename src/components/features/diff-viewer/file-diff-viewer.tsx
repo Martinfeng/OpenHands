@@ -21,6 +21,8 @@ import { MarkdownRenderer } from "#/components/features/markdown/markdown-render
 import { Typography } from "#/ui/typography";
 import { LoadingSpinner } from "./loading-spinner";
 import { EditorContainer } from "./editor-container";
+import { useUITheme } from "#/themes/ui-theme-context";
+import { APPEARANCE_PALETTES } from "#/themes/appearance-palette";
 
 type ViewMode = "diff" | "old" | "new";
 
@@ -48,25 +50,23 @@ const STATUS_MAP: Record<GitChangeStatus, string | IconType> = {
 };
 
 const beforeMount = (monaco: Monaco) => {
-  monaco.editor.defineTheme("custom-diff-theme", {
-    base: "vs-dark",
-    inherit: true,
-    rules: [
-      { token: "comment", foreground: "6a9955" },
-      { token: "keyword", foreground: "569cd6" },
-      { token: "string", foreground: "ce9178" },
-      { token: "number", foreground: "b5cea8" },
-    ],
-    colors: {
-      "diffEditor.insertedTextBackground": "#014b01AA",
-      "diffEditor.removedTextBackground": "#750000AA",
-      "diffEditor.insertedLineBackground": "#003f00AA",
-      "diffEditor.removedLineBackground": "#5a0000AA",
-      "diffEditor.border": "var(--oh-border-subtle)",
-      "editorUnnecessaryCode.border": "#00000000",
-      "editorUnnecessaryCode.opacity": "rgba(0, 0, 0, 0.467)",
-    },
-  });
+  for (const appearance of ["light", "dark"] as const) {
+    const palette = APPEARANCE_PALETTES[appearance];
+    monaco.editor.defineTheme(`canvas-${appearance}`, {
+      base: appearance === "light" ? "vs" : "vs-dark",
+      inherit: true,
+      rules: [],
+      colors: {
+        "editor.background": palette[950],
+        "editor.foreground": palette[100],
+        "diffEditor.border": palette[800],
+        "diffEditor.insertedTextBackground": "#39a46b28",
+        "diffEditor.removedTextBackground": "#df555528",
+        "diffEditor.insertedLineBackground": "#39a46b14",
+        "diffEditor.removedLineBackground": "#df555514",
+      },
+    });
+  }
 };
 
 export interface FileDiffViewerProps {
@@ -81,6 +81,7 @@ export interface FileDiffViewerProps {
 }
 
 export function FileDiffViewer({ path, type, commit }: FileDiffViewerProps) {
+  const appearance = useUITheme();
   const { t } = useTranslation("openhands");
   const [isCollapsed, setIsCollapsed] = React.useState(true);
   const [editorHeight, setEditorHeight] = React.useState(400);
@@ -168,7 +169,7 @@ export function FileDiffViewer({ path, type, commit }: FileDiffViewerProps) {
             language={language}
             original={isAdded ? "" : (diff?.original ?? "")}
             modified={isDeleted ? "" : (diff?.modified ?? "")}
-            theme="custom-diff-theme"
+            theme={`canvas-${appearance}`}
             onMount={handleDiffEditorMount}
             beforeMount={beforeMount}
             options={{
@@ -203,7 +204,7 @@ export function FileDiffViewer({ path, type, commit }: FileDiffViewerProps) {
           className="w-full h-full"
           language={language}
           value={singleViewContent}
-          theme="custom-diff-theme"
+          theme={`canvas-${appearance}`}
           beforeMount={beforeMount}
           onMount={handleSingleEditorMount}
           options={SHARED_EDITOR_OPTIONS}
@@ -236,8 +237,8 @@ export function FileDiffViewer({ path, type, commit }: FileDiffViewerProps) {
                   className={cn(
                     "p-1 rounded transition-colors cursor-pointer",
                     viewMode === mode
-                      ? "bg-[var(--oh-interactive-hover)] text-white"
-                      : "text-[var(--oh-muted)] hover:bg-[var(--oh-interactive-hover)] hover:text-white",
+                      ? "bg-[var(--oh-interactive-hover)] text-foreground"
+                      : "text-[var(--oh-muted)] hover:bg-[var(--oh-interactive-hover)] hover:text-foreground",
                   )}
                 >
                   <Icon className="w-4 h-4" />

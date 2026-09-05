@@ -50,7 +50,7 @@ export function SkillsToolbar({
             type="button"
             onClick={() => onSearchChange("")}
             aria-label={t(I18nKey.MCP$SEARCH_CLEAR)}
-            className="mr-2 p-1 rounded text-tertiary-alt hover:text-white cursor-pointer"
+            className="mr-2 p-1 rounded text-tertiary-alt hover:text-foreground cursor-pointer"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>
@@ -64,7 +64,7 @@ export function SkillsToolbar({
         onClick={onOpenFilters}
         className={cn(
           "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm md:hidden",
-          "border border-[var(--oh-border)] bg-base-secondary text-white",
+          "border border-[var(--oh-border)] bg-base-secondary text-foreground",
           "cursor-pointer hover:bg-[var(--oh-interactive-hover)]",
         )}
       >

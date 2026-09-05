@@ -146,7 +146,7 @@ function buildRecommendedAutomationPills(
             <McpLogoBadge entry={entry} size="xs" />
             {name}
             {installed ? (
-              <span className="text-white">
+              <span className="text-foreground">
                 {translate(I18nKey.RECOMMENDED_AUTOMATIONS$CONNECTED)}
               </span>
             ) : !entry ? (
@@ -234,7 +234,7 @@ function AutomationCardGrid({
               <div className="flex min-w-0 flex-1 flex-col gap-3">
                 <header className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-sm font-semibold text-white">
+                    <h3 className="truncate text-sm font-semibold text-foreground">
                       {automation.name}
                     </h3>
                     <p className="mt-0.5 truncate text-xs text-tertiary-alt">

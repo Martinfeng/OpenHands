@@ -179,7 +179,7 @@ button.extension-module-card-interactive {
 }
 
 .extension-module-card-interactive:hover {
-  border-color: rgb(255 255 255 / 0.4);
+  border-color: var(--oh-border);
 }
 
 .extension-module-card-interactive:focus {
@@ -192,8 +192,9 @@ button.extension-module-card-interactive {
 }
 
 .extension-module-card-interactive:focus-visible {
-  outline: none;
-  border-color: rgb(255 255 255 / 0.4);
+  outline: 2px solid var(--oh-focus);
+  outline-offset: 2px;
+  border-color: var(--oh-focus);
 }
 
 .button-base {
@@ -644,4 +645,34 @@ button.extension-module-card-interactive {
   box-shadow:
     0px 4px 6px -4px rgba(0, 0, 0, 0.1),
     0px 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Native typography, keyboard focus and content colors apply inside the
+   library's existing CSS scope, including portal surfaces. */
+:focus-visible {
+  outline: 2px solid var(--oh-focus);
+  outline-offset: 3px;
+}
+
+.prose {
+  --tw-prose-body: var(--oh-foreground);
+  --tw-prose-headings: var(--oh-foreground);
+  --tw-prose-bold: var(--oh-foreground);
+  --tw-prose-lead: var(--oh-text-secondary);
+  --tw-prose-quotes: var(--oh-text-secondary);
+  --tw-prose-code: var(--oh-foreground);
+  --tw-prose-links: var(--oh-link);
+  --tw-prose-bullets: var(--oh-muted);
+  --tw-prose-counters: var(--oh-muted);
+  --tw-prose-hr: var(--oh-border-subtle);
+  --tw-prose-quote-borders: var(--oh-border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

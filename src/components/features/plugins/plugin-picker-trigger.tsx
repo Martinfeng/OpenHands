@@ -30,7 +30,7 @@ export function PluginPickerTrigger({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "flex flex-row items-center gap-2 rounded-full px-2.5 py-1 text-white",
+        "flex flex-row items-center gap-2 rounded-full px-2.5 py-1 text-foreground",
         formControlBorderClassName,
         formControlSurfaceClassName,
         formControlTransitionClassName,

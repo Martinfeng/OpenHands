@@ -172,7 +172,7 @@ export function ConversationPanelFilterMenu({
         aria-expanded={filterMenuOpen}
         onClick={() => setFilterMenuOpen(!filterMenuOpen)}
         className={cn(
-          "relative inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--oh-muted)] hover:text-white hover:bg-[var(--oh-surface-raised)]",
+          "relative inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--oh-muted)] hover:text-foreground hover:bg-[var(--oh-surface-raised)]",
           dropdownInstantColorClassName,
         )}
       >

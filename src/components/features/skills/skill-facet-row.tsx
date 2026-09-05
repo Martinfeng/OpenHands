@@ -39,8 +39,8 @@ export function SkillFacetRow({
           ? "cursor-default text-tertiary-alt/40"
           : // Same hover pair as the extensions nav links: a raised surface the
             // label brightens against, rather than a light fill it sinks into.
-            "cursor-pointer hover:bg-[var(--oh-surface-raised)] hover:text-white",
-        checked ? "text-white" : "text-tertiary-light",
+            "cursor-pointer hover:bg-[var(--oh-surface-raised)] hover:text-foreground",
+        checked ? "text-foreground" : "text-tertiary-light",
       )}
     >
       <span

@@ -42,7 +42,7 @@ import {
   nativeTheme,
   shell,
 } from "electron";
-import { chmodSync, existsSync } from "node:fs";
+import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -267,6 +267,36 @@ async function waitForAgentServer(
 let loadingWin = null;
 let mainWin = null;
 
+const appearanceFile = join(app.getPath("userData"), "appearance.json");
+function readDesktopAppearance() {
+  try {
+    const value = JSON.parse(readFileSync(appearanceFile, "utf8"));
+    if (value === "light" || value === "dark") return value;
+  } catch { /* First launch or unavailable local preferences. */ }
+  return "system";
+}
+
+function windowBackground() {
+  return nativeTheme.shouldUseDarkColors ? "#1b1e24" : "#ffffff";
+}
+
+nativeTheme.on("updated", () => {
+  for (const win of [mainWin, loadingWin]) {
+    if (win && !win.isDestroyed()) win.setBackgroundColor(windowBackground());
+  }
+});
+
+ipcMain.on("appearance:set", (event, preference) => {
+  if (!mainWin || event.sender !== mainWin.webContents ||
+      event.senderFrame !== mainWin.webContents.mainFrame ||
+      !event.senderFrame.url.startsWith("http://localhost:8000/") ||
+      !["system", "light", "dark"].includes(preference)) return;
+  nativeTheme.themeSource = preference;
+  try { writeFileSync(appearanceFile, JSON.stringify(preference)); }
+  catch { /* Do not interrupt the app when local storage is read-only. */ }
+  mainWin.setBackgroundColor(windowBackground());
+});
+
 // Collapsed splash size — loading.html's .container height must match. The
 // expanded height reveals the startup-log console below it ("Show details").
 const LOADING_WIN_WIDTH = 460;
@@ -301,7 +331,7 @@ function createLoadingWindow() {
     center: true,
     show: false,
     // Pre-paint window color; must match --oh-background in loading.html.
-    backgroundColor: "#0b0e14",
+    backgroundColor: windowBackground(),
     icon: appIconPath,
     webPreferences: {
       nodeIntegration: false,
@@ -340,12 +370,13 @@ function createMainWindow() {
     show: false,
     // App-shell background (--oh-background in src/index.css) — avoids white
     // flashes during the show → maximize repaint after the splash closes.
-    backgroundColor: "#0b0e14",
+    backgroundColor: windowBackground(),
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     icon: appIconPath,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      preload: join(__dirname, "appearance-preload.cjs"),
     },
   });
 
@@ -631,7 +662,7 @@ async function startStack() {
 // ── App lifecycle ─────────────────────────────────────────────────────────────
 
 app.whenReady().then(async () => {
-  nativeTheme.themeSource = "dark";
+  nativeTheme.themeSource = readDesktopAppearance();
 
   // Set the dock icon explicitly on macOS so `npm run desktop` shows the
   // OpenHands logo instead of the default Electron logo. In a packaged

@@ -49,7 +49,7 @@ export function CommandMenuTrigger({ collapsed }: CommandMenuTriggerProps) {
           <span
             className={cn(
               SIDEBAR_ICON_SLOT_CLASS,
-              "text-[var(--oh-muted)] group-hover:text-white",
+              "text-[var(--oh-muted)] group-hover:text-foreground",
             )}
             aria-hidden="true"
           >

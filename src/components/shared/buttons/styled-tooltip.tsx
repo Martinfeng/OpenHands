@@ -39,13 +39,13 @@ export function StyledTooltip({
       placement={placement}
       offset={offset}
       shouldFlip={shouldFlip}
-      className={cn("bg-white text-black", tooltipClassName)}
+      className={cn("bg-surface-raised text-foreground", tooltipClassName)}
       showArrow={showArrow}
       disableAnimation={disableAnimation}
       classNames={{
         content: cn(
           "z-[9999] rounded-md px-2 py-1 text-xs font-medium shadow-md",
-          "!bg-white !text-black",
+          "border border-border-subtle bg-surface-raised text-foreground",
           tooltipClassName,
         ),
       }}

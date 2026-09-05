@@ -239,7 +239,7 @@ export function CheckBackendStep({
       className="flex flex-col gap-6"
     >
       <header className="flex flex-col gap-2">
-        <h2 className="text-2xl font-medium text-white">{t(titleKey)}</h2>
+        <h2 className="text-2xl font-medium text-foreground">{t(titleKey)}</h2>
         {treatAsNoBackend ? null : (
           <p
             data-testid="onboarding-backend-subtitle"

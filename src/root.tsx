@@ -47,18 +47,8 @@ import { TelemetryConsentBanner } from "#/components/features/analytics/telemetr
 import { buildAgentCanvasPath } from "#/utils/base-path";
 import { useOnboardingCompletion } from "#/components/features/onboarding/use-onboarding-completion";
 import { NavigationProvider } from "#/context/navigation-context";
-import {
-  applyColorTheme,
-  readPersistedColorTheme,
-} from "#/themes/color-themes";
-
-/** Applies the persisted color-theme palette to document.body on mount. */
-function ColorThemeApplier() {
-  React.useEffect(() => {
-    applyColorTheme(readPersistedColorTheme());
-  }, []);
-  return null;
-}
+import { useAppearance } from "#/themes/appearance";
+import { appearanceVariables } from "#/themes/appearance-palette";
 
 // Only rendered when the active backend is unreachable; keep the modal out of
 // the default root graph.
@@ -90,6 +80,10 @@ const BackendFormModal = React.lazy(() =>
 );
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const { preference, resolved } = useAppearance();
+  React.useEffect(() => {
+    window.desktopAppearance?.setTheme(preference);
+  }, [preference]);
   return (
     <html lang="en">
       <head>
@@ -98,9 +92,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body data-agent-server-ui="" className="m-0">
-        <AgentServerUIRoot contentClassName="min-h-screen">
-          <ColorThemeApplier />
+      <body
+        data-agent-server-ui=""
+        data-theme={resolved}
+        className={`m-0 ${resolved}`}
+        style={
+          {
+            ...appearanceVariables(resolved),
+            colorScheme: resolved,
+          } as React.CSSProperties
+        }
+      >
+        <AgentServerUIRoot theme={resolved} contentClassName="min-h-screen">
           {children}
           <Toaster toastOptions={TOAST_OPTIONS} />
           <div id="modal-portal-exit" />
@@ -114,7 +117,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 function AgentServerBootstrapLoading() {
   return (
-    <main className="min-h-screen bg-base px-6 py-10 text-white">
+    <main className="min-h-screen bg-base px-6 py-10 text-foreground">
       <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center">
         <div className="rounded-3xl border border-white/10 bg-base/80 px-8 py-10 shadow-2xl">
           <LoadingSpinner size="large" />

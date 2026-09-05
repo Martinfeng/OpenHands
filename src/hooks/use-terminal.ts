@@ -3,6 +3,7 @@ import { Terminal } from "@xterm/xterm";
 import React from "react";
 import { Command, useCommandStore } from "#/stores/command-store";
 import { parseTerminalOutput } from "#/utils/parse-terminal-output";
+import { useUITheme } from "#/themes/ui-theme-context";
 
 /*
   NOTE: Tests for this hook are indirectly covered by the tests for the XTermTerminal component.
@@ -90,6 +91,7 @@ function resolveTerminalForeground(host: HTMLElement): string {
 const persistentLastCommandIndex = { current: 0 };
 
 export const useTerminal = () => {
+  const appearance = useUITheme();
   const commands = useCommandStore((state) => state.commands);
   const terminal = React.useRef<Terminal | null>(null);
   const fitAddon = React.useRef<FitAddon | null>(null);
@@ -170,6 +172,15 @@ export const useTerminal = () => {
       lastCommandIndex.current = 0;
     };
   }, []);
+
+  React.useEffect(() => {
+    if (terminal.current && ref.current) {
+      terminal.current.options.theme = {
+        ...terminal.current.options.theme,
+        foreground: resolveTerminalForeground(ref.current),
+      };
+    }
+  }, [appearance]);
 
   React.useEffect(() => {
     if (

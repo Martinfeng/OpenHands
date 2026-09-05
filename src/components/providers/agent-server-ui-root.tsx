@@ -1,5 +1,7 @@
 import React from "react";
 import { cn } from "#/utils/utils";
+import { appearanceVariables } from "#/themes/appearance-palette";
+import { UIThemeContext } from "#/themes/ui-theme-context";
 import {
   AGENT_SERVER_UI_DEFAULT_CSS_VARIABLES,
   AGENT_SERVER_UI_DEFAULT_THEME,
@@ -27,14 +29,17 @@ export function AgentServerUIRoot({
   contentClassName,
   ...divProps
 }: AgentServerUIRootProps) {
+  const appearance = theme === "light" ? "light" : "dark";
   const scopedStyle = React.useMemo(
     () =>
       ({
         ...AGENT_SERVER_UI_DEFAULT_CSS_VARIABLES,
+        ...appearanceVariables(appearance),
+        colorScheme: appearance,
         ...styleOverrides,
         ...style,
       }) as React.CSSProperties,
-    [style, styleOverrides],
+    [appearance, style, styleOverrides],
   );
 
   return (
@@ -49,7 +54,9 @@ export function AgentServerUIRoot({
         className={cn(theme, contentClassName, "text-foreground")}
         data-theme={theme}
       >
-        {children}
+        <UIThemeContext.Provider value={appearance}>
+          {children}
+        </UIThemeContext.Provider>
       </div>
     </div>
   );

@@ -11,8 +11,9 @@
        served, so it cannot import the app's CSS — these values mirror the
        static baseline in src/tailwind.css / src/index.css. Keep in sync. */
     :root {
-      --oh-background: #0b0e14; /* cool-grey-950 */
-      --oh-foreground: #eef2f7; /* cool-grey-100 */
+      color-scheme: light dark;
+      --oh-background: #1b1e24;
+      --oh-foreground: #e6e8ec;
       --oh-muted: #a3b0c4; /* cool-grey-400 */
       --oh-text-dim: #7e8a9e; /* cool-grey-500 */
       --oh-text-subtle: #626d82; /* cool-grey-600 */
@@ -20,6 +21,22 @@
       --oh-border-subtle: #383f50; /* cool-grey-800 */
       --oh-surface-deep: #05070a; /* cool-grey-975 */
       --oh-color-danger: #e76a5e;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --oh-background: #ffffff;
+        --oh-foreground: #262930;
+        --oh-muted: #686f7b;
+        --oh-text-dim: #787f89;
+        --oh-text-subtle: #686f7b;
+        --oh-border: #d4d7dd;
+        --oh-border-subtle: #e5e7eb;
+        --oh-surface-deep: #f0f2f5;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::after { animation: none !important; }
     }
 
     html, body {
@@ -83,7 +100,7 @@
     .spinner {
       width: 25px;
       height: 25px;
-      color: #fff;
+      color: var(--oh-foreground);
       animation: spin 1s linear infinite;
       margin-bottom: 14px;
     }

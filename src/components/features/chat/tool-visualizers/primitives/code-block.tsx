@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useCodeTheme } from "#/themes/use-code-theme";
 import { SyntaxHighlighter } from "../../../markdown/syntax-highlighter";
 import { CopyableContentWrapper } from "#/components/shared/buttons/copyable-content-wrapper";
 import { MAX_CONTENT_LENGTH } from "#/components/conversation-events/chat/event-content-helpers/shared";
@@ -34,6 +34,7 @@ export function CodeBlock({
   expandable = false,
   wrapLongLines = false,
 }: CodeBlockProps) {
+  const theme = useCodeTheme();
   const { t } = useTranslation("openhands");
   const [isExpanded, setIsExpanded] = React.useState(false);
   const isTruncated = code.length > MAX_CONTENT_LENGTH;
@@ -50,11 +51,14 @@ export function CodeBlock({
   const block = (
     <SyntaxHighlighter
       className="rounded-lg text-xs"
-      style={vscDarkPlus}
+      style={theme}
       language={language}
       PreTag="div"
       wrapLongLines={wrapLongLines}
-      customStyle={wrapLongLines ? { whiteSpace: "pre-wrap" } : undefined}
+      customStyle={{
+        background: "var(--oh-surface)",
+        ...(wrapLongLines ? { whiteSpace: "pre-wrap" } : {}),
+      }}
       codeTagProps={
         wrapLongLines ? { style: { whiteSpace: "pre-wrap" } } : undefined
       }
@@ -74,7 +78,7 @@ export function CodeBlock({
         <button
           type="button"
           onClick={() => setIsExpanded((prev) => !prev)}
-          className="self-start text-xs text-muted transition-colors hover:text-white hover:underline"
+          className="self-start text-xs text-muted transition-colors hover:text-foreground hover:underline"
         >
           {toggleLabel}
         </button>

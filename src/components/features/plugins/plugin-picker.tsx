@@ -124,7 +124,7 @@ export function PluginPicker({
             type="button"
             onClick={() => setSearch("")}
             aria-label={t(I18nKey.MCP$SEARCH_CLEAR)}
-            className="mr-2 cursor-pointer rounded p-1 text-tertiary-alt hover:text-white"
+            className="mr-2 cursor-pointer rounded p-1 text-tertiary-alt hover:text-foreground"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>

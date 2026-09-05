@@ -246,7 +246,10 @@ function BackendStatusBadge({
         className="flex items-center gap-3 text-sm"
       >
         <BackendStatusDot isConnected={isConnected} />
-        <span className="text-white" data-testid={`${testIdRoot}-status-label`}>
+        <span
+          className="text-foreground"
+          data-testid={`${testIdRoot}-status-label`}
+        >
           {statusLabel}
         </span>
         <span className="text-tertiary-alt">·</span>
@@ -1146,8 +1149,8 @@ function BackendOptionTab({
         "first:border-r first:border-r-[var(--oh-border)]",
         "focus-visible:z-10 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-300",
         isSelected
-          ? "bg-[var(--oh-surface-raised)] text-white after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary"
-          : "text-[var(--oh-muted)] hover:bg-[var(--oh-surface-raised)] hover:text-white",
+          ? "bg-[var(--oh-surface-raised)] text-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-primary"
+          : "text-[var(--oh-muted)] hover:bg-[var(--oh-surface-raised)] hover:text-foreground",
       )}
     >
       <span
@@ -1253,7 +1256,7 @@ function AgentServerGuidance({ location }: { location: AgentServerLocation }) {
     >
       {/* Heading wraps the button so the accordion keeps a real heading in the
           document outline while the whole row stays clickable. */}
-      <h4 className="text-white">
+      <h4 className="text-foreground">
         <button
           id={toggleId}
           type="button"
@@ -1311,7 +1314,7 @@ function AgentServerGuidance({ location }: { location: AgentServerLocation }) {
 
             {isRemote ? (
               <div>
-                <h5 className="font-medium text-white">
+                <h5 className="font-medium text-foreground">
                   {t(I18nKey.BACKEND$REMOTE_CONNECTION_TITLE)}
                 </h5>
                 <p className="mt-1 leading-5">
@@ -1319,7 +1322,7 @@ function AgentServerGuidance({ location }: { location: AgentServerLocation }) {
                 </p>
               </div>
             ) : (
-              <code className="block break-words font-mono text-xs text-white">
+              <code className="block break-words font-mono text-xs text-foreground">
                 {LOCAL_BACKEND_COMMAND}
               </code>
             )}

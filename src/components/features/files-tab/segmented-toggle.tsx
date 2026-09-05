@@ -49,8 +49,8 @@ export function SegmentedToggle<T extends string>({
             className={cn(
               "inline-flex items-center gap-1.5 px-2.5 py-1 rounded cursor-pointer transition-colors",
               isActive
-                ? "bg-[var(--oh-interactive-hover)] text-white"
-                : "text-[var(--oh-muted)] hover:text-white",
+                ? "bg-[var(--oh-interactive-hover)] text-foreground"
+                : "text-[var(--oh-muted)] hover:text-foreground",
             )}
           >
             {option.icon ? (
