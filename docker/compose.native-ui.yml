@@ -18,9 +18,10 @@ services:
         VITE_WORKING_DIR: /projects
         VITE_DO_NOT_TRACK: "1"
     ports:
-      - "127.0.0.1:18800:8000"
+      - "0.0.0.0:18800:18002"
     working_dir: /projects
     environment:
+      PUBLIC_MODE_PORT: "18002"
       VITE_DO_NOT_TRACK: "1"
       DO_NOT_TRACK: "1"
     volumes:
@@ -32,7 +33,7 @@ services:
         - CMD
         - node
         - -e
-        - "Promise.all(['/health', '/api/automation/health', '/canvas/'].map(path => fetch('http://127.0.0.1:8000' + path).then(r => { if (!r.ok) throw new Error(String(r.status)); }))).catch(() => process.exit(1))"
+        - "Promise.all(['/health', '/api/automation/health', '/canvas/'].map(path => fetch('http://127.0.0.1:18002' + path).then(r => { if (!r.ok) throw new Error(String(r.status)); }))).catch(() => process.exit(1))"
       interval: 15s
       timeout: 5s
       start_period: 90s
