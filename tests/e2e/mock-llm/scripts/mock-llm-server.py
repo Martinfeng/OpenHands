@@ -15,7 +15,7 @@ import os
 import sys
 import threading
 import time
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 os.environ["OPENHANDS_SUPPRESS_BANNER"] = "1"
 
@@ -77,6 +77,8 @@ class MockLLMHandler(BaseHTTPRequestHandler):
     # Named trajectories that tests can register via the admin API and then
     # activate with POST /admin/trajectory/activate.
     _named_trajectories: dict[str, list[Message | Exception]] = {}
+    _named_delays: dict[str, list[float]] = {}
+    _response_delays: list[float] = []
     # All completion request bodies since the last /admin/reset.
     # Tests read them via GET /admin/requests to verify image / content details.
     # Stored as a list so assertions survive even when the agent-server makes
@@ -103,6 +105,8 @@ class MockLLMHandler(BaseHTTPRequestHandler):
             with self._lock:
                 MockLLMHandler.test_llm = TestLLM.from_messages(build_trajectory())
                 MockLLMHandler._named_trajectories.clear()
+                MockLLMHandler._named_delays.clear()
+                MockLLMHandler._response_delays.clear()
                 MockLLMHandler._completion_requests.clear()
                 remaining = MockLLMHandler.test_llm.remaining_responses
             self._send_json(200, {
@@ -123,11 +127,20 @@ class MockLLMHandler(BaseHTTPRequestHandler):
                 return
             try:
                 messages = _parse_trajectory_turns(raw_turns)
+                delays = [turn.get("delay_seconds", 0) for turn in raw_turns]
+                if any(
+                    isinstance(delay, bool)
+                    or not isinstance(delay, (int, float))
+                    or not 0 <= delay <= 60
+                    for delay in delays
+                ):
+                    raise ValueError("delay_seconds must be a number from 0 to 60")
             except ValueError as exc:
                 self._send_error(400, "bad_request", str(exc))
                 return
             with self._lock:
                 MockLLMHandler._named_trajectories[name] = messages
+                MockLLMHandler._named_delays[name] = delays
             self._send_json(200, {"status": "registered", "name": name, "turns": len(messages)})
             return
 
@@ -144,6 +157,9 @@ class MockLLMHandler(BaseHTTPRequestHandler):
                 return
             with self._lock:
                 MockLLMHandler.test_llm = TestLLM.from_messages(list(msgs))
+                MockLLMHandler._response_delays = list(
+                    MockLLMHandler._named_delays.get(name, [])
+                )
                 remaining = MockLLMHandler.test_llm.remaining_responses
             self._send_json(200, {
                 "status": "activated",
@@ -162,13 +178,39 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", 0))
         body = json.loads(self.rfile.read(length)) if length else {}
 
+        # Agent Server 1.42.1 generates a title in the background using the
+        # conversation's LLM. This independent call must not race the scripted
+        # agent turns for a response, otherwise the final reply becomes a title.
+        messages = body.get("messages") or []
+        first = messages[0] if messages else {}
+        content = first.get("content", "")
+        if isinstance(content, list):
+            content = " ".join(part.get("text", "") for part in content)
+        if (
+            first.get("role") == "system"
+            and content.startswith(
+                "You are a helpful assistant that generates concise, "
+                "descriptive titles for conversations with OpenHands."
+            )
+            and not body.get("tools")
+        ):
+            title = TestLLM.from_messages([
+                Message(role="assistant", content=[TextContent(text="UI test conversation")])
+            ])
+            self._send_json(200, title.completion([]).raw_response.model_dump())
+            return
+
         # Append to request history for test verification.
         # Tests can GET /admin/requests to confirm image content was included.
-        with self._lock:
-            MockLLMHandler._completion_requests.append(body)
-
         try:
-            response = self.test_llm.completion([])
+            with self._lock:
+                MockLLMHandler._completion_requests.append(body)
+                response = self.test_llm.completion([])
+                delay = (
+                    MockLLMHandler._response_delays.pop(0)
+                    if MockLLMHandler._response_delays
+                    else 0
+                )
         except TestLLMExhaustedError:
             self._send_error(
                 500,
@@ -182,14 +224,21 @@ class MockLLMHandler(BaseHTTPRequestHandler):
             return
 
         raw = response.raw_response.model_dump()
-
-        if body.get("stream"):
-            stream_options = body.get("stream_options") or {}
-            self._send_streaming(
-                raw, include_usage=bool(stream_options.get("include_usage"))
-            )
-        else:
-            self._send_json(200, raw)
+        # Delay only this response, outside the lock, so tests can interrupt a
+        # real in-flight model request and resume on the next scripted turn.
+        if delay:
+            time.sleep(delay)
+        try:
+            if body.get("stream"):
+                stream_options = body.get("stream_options") or {}
+                self._send_streaming(
+                    raw, include_usage=bool(stream_options.get("include_usage"))
+                )
+            else:
+                self._send_json(200, raw)
+        except (BrokenPipeError, ConnectionResetError):
+            # The Agent Server intentionally closes cancelled model requests.
+            pass
 
     def _send_streaming(self, raw: dict, include_usage: bool = False):
         """SSE streaming: emit content chunk + finish chunk + [DONE]."""
@@ -385,7 +434,7 @@ def serve(port: int = 9999):
     test_llm = TestLLM.from_messages(build_trajectory())
     MockLLMHandler.test_llm = test_llm
 
-    server = HTTPServer(("127.0.0.1", port), MockLLMHandler)
+    server = ThreadingHTTPServer(("127.0.0.1", port), MockLLMHandler)
     print(f"Mock LLM server ready on http://127.0.0.1:{port}", flush=True)
     print(f"Trajectory: {test_llm.remaining_responses} scripted turns", flush=True)
 

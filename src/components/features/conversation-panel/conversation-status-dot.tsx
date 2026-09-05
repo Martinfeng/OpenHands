@@ -80,7 +80,7 @@ function renderIndicator(visual: Visual) {
       return (
         <span
           data-testid="conversation-status-working"
-          className="w-1.5 h-1.5 rounded-full animate-pulse bg-[var(--oh-status-success)]"
+          className="w-1.5 h-1.5 rounded-full bg-[var(--oh-status-success)]"
         />
       );
     case "active":

@@ -23,7 +23,7 @@ export function ConversationConfirmationButtons() {
   const removeSubmittedEventId = useEventMessageStore(
     (state) => state.removeSubmittedEventId,
   );
-  const [failed, setFailed] = useState(false);
+  const [failedAction, setFailedAction] = useState<string | null>(null);
 
   const { t } = useTranslation("openhands");
   const { data: conversation } = useActiveConversation();
@@ -39,6 +39,7 @@ export function ConversationConfirmationButtons() {
       if (ev.source !== "agent") return false;
       return curAgentState === AgentState.AWAITING_USER_CONFIRMATION;
     });
+  const actionKey = `${conversation?.id}:${awaitingAction?.id}`;
 
   const handleConfirmation = useCallback(
     (accept: boolean) => {
@@ -53,7 +54,7 @@ export function ConversationConfirmationButtons() {
             .submittedEventIds.includes(awaitingAction.id))
       )
         return;
-      setFailed(false);
+      setFailedAction(null);
 
       // Mark event as submitted to prevent duplicate submissions
       if (awaitingAction.id) {
@@ -71,7 +72,7 @@ export function ConversationConfirmationButtons() {
         {
           onError: () => {
             if (awaitingAction.id) removeSubmittedEventId(awaitingAction.id);
-            setFailed(true);
+            setFailedAction(actionKey);
           },
         },
       );
@@ -83,6 +84,7 @@ export function ConversationConfirmationButtons() {
       removeSubmittedEventId,
       respondToConfirmation,
       isPending,
+      actionKey,
     ],
   );
 
@@ -175,7 +177,7 @@ export function ConversationConfirmationButtons() {
           />
         </div>
       </div>
-      {failed && (
+      {failedAction === actionKey && (
         <p role="alert" className="text-sm text-[var(--oh-status-error)]">
           {t(I18nKey.APPROVAL$FAILED)}
         </p>

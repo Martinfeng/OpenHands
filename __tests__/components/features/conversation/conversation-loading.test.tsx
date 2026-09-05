@@ -7,9 +7,12 @@ import { ConversationLoading } from "#/components/features/conversation/conversa
 describe("ConversationLoading", () => {
   it("renders the loading message", () => {
     // Arrange & Act
-    render(<ConversationLoading />);
+    const { container } = render(<ConversationLoading />);
 
     // Assert — the loading status text is surfaced to the user
     expect(screen.getByText("HOME$LOADING")).toBeInTheDocument();
+    expect(
+      container.querySelector(".oh-text-shimmer, .animate-spin"),
+    ).toBeNull();
   });
 });

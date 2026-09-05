@@ -1,4 +1,11 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ComponentProps } from "react";
 import { useTranslation } from "react-i18next";
 import { I18nKey } from "#/i18n/declaration";
@@ -21,16 +28,29 @@ export function DataTable(props: ComponentProps<typeof MarkdownTable>) {
   const { t } = useTranslation("openhands");
   const parsed = useMemo(() => parseTableData(props.node), [props.node]);
   const [kind, setKind] = useState<TableChartKind>("table");
-  const [x, setX] = useState(0);
+  const [selectedX, setX] = useState(0);
   const [selected, setSelected] = useState<number[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
+  const expandButton = useRef<HTMLButtonElement>(null);
+  const restoreFocus = useRef(false);
+  const dialogId = useId();
+  useEffect(() => {
+    if (expanded) {
+      dialog.current?.showModal();
+      restoreFocus.current = true;
+    } else if (restoreFocus.current) {
+      expandButton.current?.focus();
+      restoreFocus.current = false;
+    }
+  }, [expanded]);
   const onError = useCallback(() => {
     setFailed(true);
     setKind("table");
   }, []);
   const data = parsed.data;
+  const x = data && selectedX < data.headers.length ? selectedX : 0;
   const series = useMemo(
     () =>
       data
@@ -88,14 +108,15 @@ export function DataTable(props: ComponentProps<typeof MarkdownTable>) {
           </button>
         ))}
         <button
+          ref={expandButton}
           type="button"
+          aria-expanded={expanded}
+          aria-controls={dialogId}
+          aria-haspopup="dialog"
           className="ml-auto rounded-md px-2 py-1 text-xs text-muted hover:bg-interactive-hover-low"
           onClick={() => {
             if (expanded) dialog.current?.close();
-            else {
-              setExpanded(true);
-              dialog.current?.showModal();
-            }
+            else setExpanded(true);
           }}
         >
           {t(expanded ? I18nKey.BUTTON$COLLAPSE : I18nKey.BUTTON$EXPAND)}
@@ -177,6 +198,7 @@ export function DataTable(props: ComponentProps<typeof MarkdownTable>) {
     >
       {!expanded && content}
       <dialog
+        id={dialogId}
         ref={dialog}
         aria-label={t(I18nKey.TABLE_CHART$VIEW)}
         onClose={() => setExpanded(false)}

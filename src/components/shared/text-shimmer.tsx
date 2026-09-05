@@ -43,6 +43,7 @@ function TextShimmerComponent({
     const center = SHIMMER_PERIOD / 2;
     return {
       ...style,
+      backgroundColor: "var(--oh-muted)",
       backgroundImage: `linear-gradient(105deg, var(--oh-muted) 0%, var(--oh-muted) ${center - bandHalfWidth}%, var(--oh-foreground) ${center}%, var(--oh-muted) ${center + bandHalfWidth}%, var(--oh-muted) 100%)`,
       backgroundSize: `${SHIMMER_BACKGROUND_SIZE} 100%`,
       backgroundRepeat: "no-repeat",

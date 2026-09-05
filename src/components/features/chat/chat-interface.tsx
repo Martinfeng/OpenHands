@@ -1,4 +1,5 @@
 import React from "react";
+import { useIsMutating } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { useTracking } from "#/hooks/use-tracking";
 import { useTranslation } from "react-i18next";
@@ -157,6 +158,14 @@ export function ChatInterface() {
 
   const { selectedRepository, replayJson } = useInitialQueryStore();
   const { conversationId } = useOptionalConversationId();
+  const pendingStopCount = useIsMutating({
+    predicate: (mutation) =>
+      ["pause-conversation", "stop-conversation"].includes(
+        String(mutation.options.mutationKey?.[0]),
+      ) &&
+      (mutation.state.variables as { conversationId?: string } | undefined)
+        ?.conversationId === conversationId,
+  });
 
   // The live goal banner renders in the scroll stream but advances via store
   // updates (in-progress goal events are filtered out of `renderableEvents`),
@@ -551,6 +560,7 @@ export function ChatInterface() {
               allEvents={allConversationEvents}
               isResponding={
                 curAgentState === AgentState.RUNNING &&
+                pendingStopCount === 0 &&
                 conversationWebSocket?.connectionState === "OPEN" &&
                 !errorMessage &&
                 !isChatLoading

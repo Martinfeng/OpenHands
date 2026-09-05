@@ -5,6 +5,7 @@ export const usePauseConversation = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ["pause-conversation"],
     mutationFn: (variables: { conversationId: string }) =>
       pauseConversation(variables.conversationId),
     onMutate: async () => {

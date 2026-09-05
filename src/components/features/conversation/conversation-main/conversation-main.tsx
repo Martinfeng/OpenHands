@@ -48,7 +48,7 @@ export function ConversationMain() {
         // transition toggled at runtime based on drag state
         style={
           !isMobile
-            ? { transitionProperty: isDragging ? "none" : "all" }
+            ? { transitionProperty: isDragging ? "none" : "width" }
             : undefined
         }
       >
@@ -65,7 +65,7 @@ export function ConversationMain() {
             !isMobile
               ? {
                   width: isRightPanelShown ? `${leftWidth}%` : "100%",
-                  transitionProperty: isDragging ? "none" : "all",
+                  transitionProperty: isDragging ? "none" : "width",
                 }
               : undefined
           }
@@ -103,7 +103,9 @@ export function ConversationMain() {
             )}
             style={{
               width: isRightPanelShown ? `${rightWidth}%` : "0%",
-              transitionProperty: isDragging ? "opacity, transform" : "all",
+              transitionProperty: isDragging
+                ? "opacity, transform"
+                : "width, opacity, transform",
             }}
           >
             <div className="flex h-full w-full flex-col">

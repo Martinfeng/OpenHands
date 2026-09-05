@@ -40,6 +40,8 @@ export function tableChartOption(
     xAxis: {
       type: kind === "scatter" ? "value" : "category",
       name: data.headers[x],
+      nameLocation: "middle",
+      nameGap: 28,
       ...(kind === "scatter" ? {} : { data: data.rows.map((row) => row[x]) }),
       axisLine: { lineStyle: { color: border } },
       axisLabel: { color: foreground, hideOverlap: true },

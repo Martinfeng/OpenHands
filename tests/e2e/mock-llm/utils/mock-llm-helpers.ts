@@ -830,19 +830,22 @@ export async function resetToOpenHandsAgentViaUI(page: Page) {
 
 /**
  * Register a named trajectory on the mock LLM server.
- * Each turn is: { tool_call: { name, arguments } } or { text: "..." }
+ * Each turn is: { tool_call: { name, arguments } } or { text: "..." }.
+ * Optional delay_seconds (0–60) holds that response for interruption tests.
  */
 export async function registerTrajectory(
   request: APIRequestContext,
   name: string,
   turns: Array<
-    | {
-        tool_call: {
-          name: string;
-          arguments: Record<string, unknown> | string;
-        };
-      }
-    | { text: string }
+    (
+      | {
+          tool_call: {
+            name: string;
+            arguments: Record<string, unknown> | string;
+          };
+        }
+      | { text: string }
+    ) & { delay_seconds?: number }
   >,
 ) {
   const resp = await request.post(
