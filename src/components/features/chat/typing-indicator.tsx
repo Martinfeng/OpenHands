@@ -18,6 +18,7 @@ import {
   type EventTitleDescriptor,
 } from "#/components/conversation-events/chat/event-content-helpers/get-action-event-title";
 import { TextShimmer } from "#/components/shared/text-shimmer";
+import { I18nKey } from "#/i18n/declaration";
 
 const THINKING_ACTIVITY: EventTitleDescriptor = {
   kind: "translation",
@@ -67,9 +68,15 @@ const isUserRejectObservation = (
 ): event is UserRejectObservation =>
   event.source === "environment" && "rejection_reason" in event;
 
-export const deriveLiveActivity = (
+export interface LiveActivity {
+  title: EventTitleDescriptor;
+  kind: "tool" | "thinking" | "reply";
+  eventId?: string;
+}
+
+export const deriveLiveActivityState = (
   events: readonly OHEvent[],
-): EventTitleDescriptor => {
+): LiveActivity => {
   const resolvedActionIds = new Set<string>();
   const resolvedToolCallIds = new Set<string>();
   let latest: OHEvent | undefined;
@@ -115,13 +122,17 @@ export const deriveLiveActivity = (
       }
 
       const title = stripRedundantTitlePrefix(event);
-      return title
-        ? {
-            kind: "translation",
-            key: getACPToolCallTitleKey(event),
-            values: { title },
-          }
-        : THINKING_ACTIVITY;
+      return {
+        kind: "tool",
+        eventId: event.id,
+        title: title
+          ? {
+              kind: "translation",
+              key: getACPToolCallTitleKey(event),
+              values: { title },
+            }
+          : THINKING_ACTIVITY,
+      };
     }
 
     if (
@@ -129,12 +140,28 @@ export const deriveLiveActivity = (
       !resolvedActionIds.has(event.id) &&
       !resolvedToolCallIds.has(event.tool_call_id)
     ) {
-      return getLiveActionTitle(event) ?? THINKING_ACTIVITY;
+      return {
+        kind: event.action.kind === "ThinkAction" ? "thinking" : "tool",
+        eventId: event.id,
+        title: getLiveActionTitle(event) ?? THINKING_ACTIVITY,
+      };
     }
   }
 
-  return fallback;
+  if (latest && isStreamingDeltaEvent(latest)) {
+    return {
+      title: fallback,
+      kind: latest.content ? "reply" : "thinking",
+      eventId:
+        latest.content || latest.reasoning_content ? latest.id : undefined,
+    };
+  }
+  return { title: fallback, kind: "thinking" };
 };
+
+export const deriveLiveActivity = (
+  events: readonly OHEvent[],
+): EventTitleDescriptor => deriveLiveActivityState(events).title;
 
 interface TypingIndicatorProps {
   readonly events: readonly OHEvent[];
@@ -142,22 +169,26 @@ interface TypingIndicatorProps {
 
 export function TypingIndicator({ events }: TypingIndicatorProps) {
   const { t } = useTranslation("openhands");
-  const activity = deriveLiveActivity(events);
+  const activity = deriveLiveActivityState(events);
   const title =
-    activity.kind === "text"
-      ? activity.text
-      : t(activity.key, activity.values).replace(/<\/?(?:path|cmd)>/g, "");
+    activity.kind === "thinking"
+      ? t(I18nKey.THINKING$TITLE)
+      : activity.title.kind === "text"
+        ? activity.title.text
+        : t(activity.title.key, activity.title.values).replace(
+            /<\/?(?:path|cmd)>/g,
+            "",
+          );
 
   return (
     <div
-      className="sticky top-0 z-10 min-w-0 bg-base py-2 text-sm font-medium"
+      className="min-w-0 shrink-0 py-2 text-sm font-medium"
       data-testid="live-activity-chip"
       role="status"
       aria-live="polite"
     >
       <TextShimmer
         as="span"
-        duration={2.6}
         className="max-w-full truncate align-middle"
         title={title}
       >

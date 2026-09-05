@@ -7,6 +7,7 @@ import { ObservationResultStatus } from "#/components/conversation-events/chat/e
 import { MarkdownRenderer } from "../markdown/markdown-renderer";
 import { cn } from "#/utils/utils";
 import { I18nKey } from "#/i18n/declaration";
+import { TextShimmer } from "#/components/shared/text-shimmer";
 
 interface GenericEventMessageProps {
   title: React.ReactNode;
@@ -19,6 +20,7 @@ interface GenericEventMessageProps {
   titleTrailing?: React.ReactNode;
   /** Optional icon rendered before the title text. */
   titleIcon?: React.ReactNode;
+  isLive?: boolean;
 }
 
 export function GenericEventMessage({
@@ -29,6 +31,7 @@ export function GenericEventMessage({
   chevronPosition = "after",
   titleTrailing,
   titleIcon,
+  isLive = false,
 }: GenericEventMessageProps) {
   const { t } = useTranslation("openhands");
   const [showDetails, setShowDetails] = React.useState(initiallyExpanded);
@@ -70,7 +73,18 @@ export function GenericEventMessage({
               fragments (e.g. "Editing <path>...</path>") is preserved by
               normal inline flow instead of being collapsed between
               anonymous flex items. */}
-          <span>{title}</span>
+          {isLive ? (
+            <TextShimmer
+              as="span"
+              data-testid="live-activity-chip"
+              role="status"
+              aria-live="polite"
+            >
+              {title}
+            </TextShimmer>
+          ) : (
+            <span>{title}</span>
+          )}
           {chevronPosition === "after" && chevron}
         </div>
 

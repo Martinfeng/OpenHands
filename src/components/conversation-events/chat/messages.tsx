@@ -8,7 +8,10 @@ import { ThoughtEventMessage } from "./event-message-components/thought-event-me
 import { useModelStore } from "#/stores/model-store";
 import { ModelMessages } from "#/components/features/chat/model-messages";
 import { useOptionalConversationId } from "#/hooks/use-conversation-id";
-import { TypingIndicator } from "#/components/features/chat/typing-indicator";
+import {
+  TypingIndicator,
+  deriveLiveActivityState,
+} from "#/components/features/chat/typing-indicator";
 // TODO: Implement microagent functionality for V1 when APIs support V1 event IDs
 // import { AgentState } from "#/types/agent-state";
 // import MemoryIcon from "#/icons/memory_icon.svg?react";
@@ -63,21 +66,23 @@ export const Messages: React.FC<MessagesProps> = React.memo(
       () => groupEvents(messages, undefined, allEvents),
       [messages, allEvents],
     );
-    let lastUserIndex = messages.length - 1;
-    while (lastUserIndex >= 0 && messages[lastUserIndex].source !== "user")
-      lastUserIndex -= 1;
-    const responseIndex = renderedItems.findIndex(
-      (item) =>
-        (item.kind === "group" ? item.startIndex : item.index) > lastUserIndex,
-    );
-    const responseTitle = isResponding ? (
-      <TypingIndicator events={allEvents} />
-    ) : null;
+    const liveActivity = isResponding
+      ? deriveLiveActivityState(allEvents)
+      : null;
+    const liveEventId = liveActivity?.eventId;
+    const hasLiveEvent =
+      liveEventId !== undefined &&
+      renderedItems.some((item) =>
+        item.kind === "group"
+          ? item.events.some((event) => event.id === liveEventId)
+          : item.kind === "single" && item.event.id === liveEventId,
+      );
 
     const renderEventMessage = (
       event: OpenHandsEvent,
       index: number,
       suppressThought: boolean,
+      insideGroup = false,
     ) => (
       <EventMessage
         key={event.id}
@@ -87,6 +92,7 @@ export const Messages: React.FC<MessagesProps> = React.memo(
         isInLast10Actions={messages.length - 1 - index < 10}
         planPreviewEventIds={planPreviewEventIds}
         suppressThought={suppressThought}
+        isLive={!insideGroup && hasLiveEvent && event.id === liveEventId}
       />
     );
 
@@ -96,7 +102,6 @@ export const Messages: React.FC<MessagesProps> = React.memo(
           if (item.kind === "single") {
             return (
               <React.Fragment key={`single-${item.event.id}`}>
-                {itemIndex === responseIndex && responseTitle}
                 {/* Thoughts for singles are also hoisted as their own
                     "thought" item, so suppress the inline render to avoid
                     duplication. */}
@@ -109,7 +114,6 @@ export const Messages: React.FC<MessagesProps> = React.memo(
           if (item.kind === "thought") {
             return (
               <React.Fragment key={`thought-${item.action.id}`}>
-                {itemIndex === responseIndex && responseTitle}
                 <ThoughtEventMessage event={item.action} />
                 {maybeRenderModelMessages(item.action.id)}
               </React.Fragment>
@@ -124,14 +128,19 @@ export const Messages: React.FC<MessagesProps> = React.memo(
           const groupKey = item.events[0]?.id ?? `group-${item.startIndex}`;
           return (
             <React.Fragment key={`group-${groupKey}`}>
-              {itemIndex === responseIndex && responseTitle}
               <EventGroup
                 events={item.events}
                 allEvents={allEvents}
                 isFinalized={isFinalized}
+                liveEventId={liveEventId}
               >
                 {item.events.map((event, offset) =>
-                  renderEventMessage(event, item.startIndex + offset, true),
+                  renderEventMessage(
+                    event,
+                    item.startIndex + offset,
+                    true,
+                    true,
+                  ),
                 )}
               </EventGroup>
               {item.events.map((event) => (
@@ -142,7 +151,11 @@ export const Messages: React.FC<MessagesProps> = React.memo(
             </React.Fragment>
           );
         })}
-        {responseIndex === -1 && responseTitle}
+        {/* A short-lived activity item for gaps with no tool/thinking title.
+            Streamed body text already makes progress visible on its own. */}
+        {liveActivity && liveActivity.kind !== "reply" && !hasLiveEvent && (
+          <TypingIndicator events={allEvents} />
+        )}
       </>
     );
   },

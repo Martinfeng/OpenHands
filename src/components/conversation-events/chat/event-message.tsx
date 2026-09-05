@@ -53,6 +53,7 @@ interface EventMessageProps {
    * Has no effect on `ThinkAction`, whose thought IS its action body.
    */
   suppressThought?: boolean;
+  isLive?: boolean;
 }
 
 /**
@@ -141,6 +142,7 @@ export function EventMessage({
   isInLast10Actions,
   planPreviewEventIds,
   suppressThought = false,
+  isLive = false,
 }: EventMessageProps) {
   const { data: config } = useConfig();
   const { planContent } = useConversationStore();
@@ -187,7 +189,11 @@ export function EventMessage({
   // the card shape, success indicator and markdown rendering all match.
   if (isACPToolCallEvent(event)) {
     return (
-      <GenericEventMessageWrapper event={event} isLastMessage={isLastMessage} />
+      <GenericEventMessageWrapper
+        event={event}
+        isLastMessage={isLastMessage}
+        isLive={isLive}
+      />
     );
   }
 
@@ -202,7 +208,12 @@ export function EventMessage({
       .join("\n\n");
     return (
       <>
-        {reasoningContent && <CollapsibleThinking content={reasoningContent} />}
+        {reasoningContent && (
+          <CollapsibleThinking
+            content={reasoningContent}
+            isLive={isLive && !message}
+          />
+        )}
         {message && (
           <ChatMessage
             type="agent"
@@ -229,7 +240,12 @@ export function EventMessage({
   // (usually English) differs from the conversation language.
   if (isActionEvent(event) && event.action.kind === "ThinkAction") {
     const thinkAction = event as ActionEvent<ThinkAction>;
-    return <CollapsibleThinking content={thinkAction.action.thought} />;
+    return (
+      <CollapsibleThinking
+        content={thinkAction.action.thought}
+        isLive={isLive}
+      />
+    );
   }
 
   // Action events - render thought + action (will be replaced by thought + observation)
@@ -247,6 +263,7 @@ export function EventMessage({
         <GenericEventMessageWrapper
           event={event}
           isLastMessage={isLastMessage}
+          isLive={isLive}
         />
       </>
     );

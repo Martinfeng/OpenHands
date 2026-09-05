@@ -10,6 +10,7 @@ import {
 import { I18nKey } from "#/i18n/declaration";
 import { getEventContent } from "../event-content-helpers/get-event-content";
 import { IsInEventGroupContext } from "../../../features/chat/is-in-event-group-context";
+import { TextShimmer } from "#/components/shared/text-shimmer";
 
 interface EventGroupProps {
   /** The events represented by this group. Used to compute the summary. */
@@ -29,6 +30,7 @@ interface EventGroupProps {
    * the right.
    */
   isFinalized?: boolean;
+  liveEventId?: string;
   /** The fully-rendered event messages to show when the group is expanded. */
   children: React.ReactNode;
 }
@@ -58,6 +60,7 @@ export function EventGroup({
   events,
   allEvents,
   isFinalized = false,
+  liveEventId,
   children,
 }: EventGroupProps) {
   const { t } = useTranslation("openhands");
@@ -81,7 +84,8 @@ export function EventGroup({
   // pending action; otherwise it's the latest observation, with its
   // originating action looked up so the title can be the action-style summary
   // ("Editing path/to/file") instead of the observation default.
-  const latestEvent = events[events.length - 1];
+  const liveEvent = events.find((event) => event.id === liveEventId);
+  const latestEvent = liveEvent ?? events[events.length - 1];
   let latestTitle: React.ReactNode = null;
   if (latestEvent) {
     if (isActionEvent(latestEvent)) {
@@ -121,7 +125,7 @@ export function EventGroup({
         data-testid="event-group-toggle"
         className="w-full flex items-center justify-between gap-2 text-left cursor-pointer"
       >
-        {isFinalized ? (
+        {isFinalized && !liveEvent ? (
           <span className="flex items-center gap-2 min-w-0 font-normal text-[var(--oh-muted)]">
             <Chevron className="h-4 w-4 fill-[var(--oh-muted)] flex-shrink-0" />
             <span className="truncate">{countSummary}</span>
@@ -130,7 +134,19 @@ export function EventGroup({
           <>
             <span className="flex items-center gap-2 min-w-0 font-normal text-[var(--oh-muted)]">
               <Chevron className="h-4 w-4 fill-[var(--oh-muted)] flex-shrink-0" />
-              <span className="truncate">{latestTitle ?? countSummary}</span>
+              {liveEvent ? (
+                <TextShimmer
+                  as="span"
+                  className="truncate"
+                  data-testid="live-activity-chip"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {latestTitle ?? countSummary}
+                </TextShimmer>
+              ) : (
+                <span className="truncate">{latestTitle ?? countSummary}</span>
+              )}
             </span>
             <span className="flex items-center flex-shrink-0 font-normal text-[var(--oh-muted)]">
               <span className="truncate">{countSummary}</span>

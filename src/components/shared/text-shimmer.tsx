@@ -13,7 +13,7 @@ const SHIMMER_PERIOD = 100;
 const SHIMMER_TRAVEL = 200;
 
 export type TextShimmerProps = {
-  children: string;
+  children: React.ReactNode;
   as?: React.ElementType;
   className?: string;
   duration?: number;
@@ -24,7 +24,7 @@ function TextShimmerComponent({
   children,
   as: Component = "p",
   className,
-  duration = 2.6,
+  duration = 4,
   spread = 12,
   style,
   ...rest
@@ -47,11 +47,13 @@ function TextShimmerComponent({
       backgroundImage: `linear-gradient(105deg, var(--oh-muted) 0%, var(--oh-muted) ${center - bandHalfWidth}%, var(--oh-foreground) ${center}%, var(--oh-muted) ${center + bandHalfWidth}%, var(--oh-muted) 100%)`,
       backgroundSize: `${SHIMMER_BACKGROUND_SIZE} 100%`,
       backgroundRepeat: "no-repeat",
+      backgroundPosition: `${SHIMMER_TRAVEL}% center`,
       WebkitBackgroundClip: "text",
       backgroundClip: "text",
       color: "transparent",
       WebkitTextFillColor: "transparent",
       animation: `${animationName} ${duration}s linear infinite`,
+      animationDelay: "0.6s",
     } as React.CSSProperties;
   }, [animationName, bandHalfWidth, duration, style]);
 
@@ -71,7 +73,7 @@ function TextShimmerComponent({
     <>
       <style
         dangerouslySetInnerHTML={{
-          __html: `@keyframes ${animationName}{from{background-position:${SHIMMER_TRAVEL}% center}to{background-position:-${SHIMMER_TRAVEL}% center}}`,
+          __html: `@keyframes ${animationName}{0%{background-position:${SHIMMER_TRAVEL}% center}25%,100%{background-position:-${SHIMMER_TRAVEL}% center}}`,
         }}
       />
       <Component

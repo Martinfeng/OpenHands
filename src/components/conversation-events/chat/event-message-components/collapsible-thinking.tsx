@@ -5,10 +5,12 @@ import ArrowUp from "#/icons/angle-up-solid.svg?react";
 import LightbulbIcon from "#/icons/lightbulb.svg?react";
 import { I18nKey } from "#/i18n/declaration";
 import { MarkdownRenderer } from "../../../features/markdown/markdown-renderer";
+import { TextShimmer } from "#/components/shared/text-shimmer";
 
 interface CollapsibleThinkingProps {
   /** The thinking / reasoning content to display when expanded. */
   content: string;
+  isLive?: boolean;
 }
 
 /**
@@ -16,7 +18,10 @@ interface CollapsibleThinkingProps {
  * section.  Collapsed by default so the chat stays compact — especially
  * useful when the thinking language differs from the conversation language.
  */
-export function CollapsibleThinking({ content }: CollapsibleThinkingProps) {
+export function CollapsibleThinking({
+  content,
+  isLive = false,
+}: CollapsibleThinkingProps) {
   const { t } = useTranslation("openhands");
   const [expanded, setExpanded] = React.useState(false);
 
@@ -43,9 +48,21 @@ export function CollapsibleThinking({ content }: CollapsibleThinkingProps) {
       >
         <Chevron className="h-4 w-4 fill-[var(--oh-muted)] flex-shrink-0" />
         <LightbulbIcon className="h-4 w-4 fill-[var(--oh-muted)] flex-shrink-0" />
-        <span className="font-normal text-[var(--oh-muted)]">
-          {t(I18nKey.THINKING$TITLE)}
-        </span>
+        {isLive ? (
+          <TextShimmer
+            as="span"
+            className="font-normal"
+            data-testid="live-activity-chip"
+            role="status"
+            aria-live="polite"
+          >
+            {t(I18nKey.THINKING$TITLE)}
+          </TextShimmer>
+        ) : (
+          <span className="font-normal text-[var(--oh-muted)]">
+            {t(I18nKey.THINKING$TITLE)}
+          </span>
+        )}
       </button>
 
       {expanded && (

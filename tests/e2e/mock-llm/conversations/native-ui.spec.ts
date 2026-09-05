@@ -103,7 +103,10 @@ test.describe("native UI with Agent Server 1.42.1", () => {
         await page
           .locator(".oh-text-shimmer")
           .evaluate((el) => getComputedStyle(el).animationDuration),
-      ).toBe("2.6s");
+      ).toBe("4s");
+      await expect(page.getByTestId("live-activity-chip")).toContainText(
+        "NATIVE_UI_TOOL_OK",
+      );
       await expect(
         page
           .getByTestId("agent-message")
@@ -157,6 +160,76 @@ test.describe("native UI with Agent Server 1.42.1", () => {
     } finally {
       await deleteConversation(request, id);
       await setConfirmation(request, false);
+    }
+  });
+
+  test("moves shimmer to the current tool title across a long response and a collapsed group", async ({
+    page,
+    request,
+  }, testInfo) => {
+    await setConfirmation(request, false);
+    await registerTrajectory(request, "native-activity-titles", [
+      {
+        text: Array.from(
+          { length: 24 },
+          (_, index) => `Progress paragraph ${index + 1}.`,
+        ).join("\n\n"),
+      },
+      {
+        tool_call: {
+          name: "terminal",
+          arguments: { command: "sleep 5; printf 'FIRST_ACTIVITY_OK\\n'" },
+        },
+      },
+      {
+        tool_call: {
+          name: "terminal",
+          arguments: { command: "sleep 5; printf 'SECOND_ACTIVITY_OK\\n'" },
+        },
+      },
+      { text: "Activity title check complete." },
+    ]);
+    await activateTrajectory(request, "native-activity-titles");
+    const id = await start(page);
+    try {
+      await expect(
+        page
+          .getByTestId("agent-message")
+          .filter({ hasText: "Progress paragraph 24." }),
+      ).toBeVisible({ timeout: 30_000 });
+      // A plain text completion ends the SDK turn. Continue in the same long
+      // conversation so the following scripted tool calls actually execute.
+      await expect(page.getByTestId("stop-button")).toHaveCount(0);
+      await setChatInput(page, "Continue with the two tool checks.");
+      await page.getByTestId("submit-button").click();
+      const live = page.getByTestId("live-activity-chip");
+      await expect(live).toContainText("FIRST_ACTIVITY_OK", {
+        timeout: 30_000,
+      });
+      await expect(live).toBeInViewport();
+      await expect(page.locator(".oh-text-shimmer")).toHaveCount(1);
+      await expect(live).toContainText("SECOND_ACTIVITY_OK", {
+        timeout: 15_000,
+      });
+      await expect(live).toBeInViewport();
+      await page.screenshot({
+        path: testInfo.outputPath("current-activity-title.png"),
+      });
+      const group = page.getByTestId("event-group").filter({ has: live });
+      await group.getByTestId("event-group-toggle").click();
+      await expect(group.getByTestId("event-group-content")).toBeVisible();
+      await expect(page.locator(".oh-text-shimmer")).toHaveCount(1);
+      await expect(
+        group.getByTestId("event-group-content").locator(".oh-text-shimmer"),
+      ).toHaveCount(0);
+      await expect(
+        page
+          .getByTestId("agent-message")
+          .filter({ hasText: "Activity title check complete." }),
+      ).toBeVisible({ timeout: 15_000 });
+      await expect(live).toHaveCount(0);
+    } finally {
+      await deleteConversation(request, id);
     }
   });
 

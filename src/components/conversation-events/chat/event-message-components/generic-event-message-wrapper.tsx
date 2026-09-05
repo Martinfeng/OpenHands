@@ -31,6 +31,7 @@ interface GenericEventMessageWrapperProps {
   event: OpenHandsEvent | SkillReadyEvent;
   isLastMessage: boolean;
   correspondingAction?: ActionEvent;
+  isLive?: boolean;
 }
 
 /**
@@ -69,6 +70,7 @@ export function GenericEventMessageWrapper({
   event,
   isLastMessage,
   correspondingAction,
+  isLive = false,
 }: GenericEventMessageWrapperProps) {
   const { title, details } = getEventContent(event, correspondingAction);
 
@@ -114,6 +116,7 @@ export function GenericEventMessageWrapper({
     <div>
       <GenericEventMessage
         title={title}
+        isLive={isLive}
         details={bodyDetails}
         success={success}
         initiallyExpanded={initiallyExpanded}
