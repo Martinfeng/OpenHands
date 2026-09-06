@@ -55,6 +55,36 @@ test.describe("native UI with Agent Server 1.42.1", () => {
     await ensureMockLLMProfile(page);
   });
 
+  test("updates body and inherited text colors with the resolved appearance", async ({
+    page,
+  }) => {
+    await page.goto("/settings/app");
+    await dismissAnalyticsModal(page);
+    await selectDropdownOption(page, /Color theme/i, "Follow system");
+    await page.evaluate(() => {
+      const probe = document.createElement("span");
+      probe.dataset.testid = "body-inherited-text";
+      probe.textContent = "Theme inheritance probe";
+      document.body.append(probe);
+    });
+    for (const [colorScheme, expectedColor] of [
+      ["light", "rgb(38, 41, 48)"],
+      ["dark", "rgb(230, 232, 236)"],
+      ["light", "rgb(38, 41, 48)"],
+    ] as const) {
+      await page.emulateMedia({ colorScheme });
+      await expect(page.locator("body")).toHaveAttribute(
+        "data-theme",
+        colorScheme,
+      );
+      await expect(page.locator("body")).toHaveCSS("color", expectedColor);
+      await expect(page.getByTestId("body-inherited-text")).toHaveCSS(
+        "color",
+        expectedColor,
+      );
+    }
+  });
+
   test("approves a real tool and renders math, charts and theme changes", async ({
     page,
     request,

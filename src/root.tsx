@@ -100,6 +100,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {
             ...appearanceVariables(resolved),
             colorScheme: resolved,
+            // Scoped utilities only match descendants, not the body scope root.
+            color: "var(--oh-foreground)",
           } as React.CSSProperties
         }
       >
