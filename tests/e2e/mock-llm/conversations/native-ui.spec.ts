@@ -89,12 +89,13 @@ test.describe("native UI with Agent Server 1.42.1", () => {
     page,
     request,
   }, testInfo) => {
+    await page.emulateMedia({ colorScheme: "light" });
     await setConfirmation(request, true);
     await registerTrajectory(request, "native-data", [
       {
         tool_call: {
           name: "terminal",
-          arguments: { command: "sleep 3; printf 'NATIVE_UI_TOOL_OK\\n'" },
+          arguments: { command: "sleep 5; printf 'NATIVE_UI_TOOL_OK\\n'" },
         },
       },
       { text: markdown },
@@ -134,6 +135,17 @@ test.describe("native UI with Agent Server 1.42.1", () => {
           .locator(".oh-text-shimmer")
           .evaluate((el) => getComputedStyle(el).animationDuration),
       ).toBe("3s");
+      await expect(page.locator(".oh-text-shimmer")).toHaveCSS(
+        "font-weight",
+        "500",
+      );
+      await expect(page.locator(".oh-text-shimmer")).toHaveCSS(
+        "background-image",
+        /rgb\(8, 10, 13\)/,
+      );
+      await page
+        .getByTestId("live-activity-chip")
+        .screenshot({ path: testInfo.outputPath("light-shimmer-title.png") });
       await expect(page.getByTestId("live-activity-chip")).toContainText(
         "NATIVE_UI_TOOL_OK",
       );

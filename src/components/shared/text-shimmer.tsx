@@ -39,18 +39,22 @@ function TextShimmerComponent({
   // With a 2x background, 100% puts the highlight center at the left edge
   // and 0% puts it at the right. Start/end just outside those edges so the
   // sweep spends its time crossing the text, rather than travelling offscreen.
-  const sweepStart = 100 + bandHalfWidth * 2;
-  const sweepEnd = -bandHalfWidth * 2;
+  const sweepStart = `calc(100% + ${bandHalfWidth * 2}% * var(--oh-shimmer-spread, 1))`;
+  const sweepEnd = `calc(-${bandHalfWidth * 2}% * var(--oh-shimmer-spread, 1))`;
 
   const shimmerStyle = useMemo(() => {
     const center = SHIMMER_PERIOD / 2;
+    const base = "var(--oh-shimmer-base, var(--oh-muted))";
+    const highlight = "var(--oh-shimmer-highlight, var(--oh-foreground))";
+    const halfWidth = `${bandHalfWidth}% * var(--oh-shimmer-spread, 1)`;
     return {
       ...style,
-      backgroundColor: "var(--oh-muted)",
-      backgroundImage: `linear-gradient(105deg, var(--oh-muted) 0%, var(--oh-muted) ${center - bandHalfWidth}%, var(--oh-foreground) ${center}%, var(--oh-muted) ${center + bandHalfWidth}%, var(--oh-muted) 100%)`,
+      backgroundColor: base,
+      backgroundImage: `linear-gradient(105deg, ${base} 0%, ${base} calc(${center}% - ${halfWidth}), ${highlight} calc(${center}% - var(--oh-shimmer-core, 0%)), ${highlight} calc(${center}% + var(--oh-shimmer-core, 0%)), ${base} calc(${center}% + ${halfWidth}), ${base} 100%)`,
       backgroundSize: `${SHIMMER_BACKGROUND_SIZE} 100%`,
       backgroundRepeat: "no-repeat",
-      backgroundPosition: `${sweepStart}% center`,
+      backgroundPosition: `${sweepStart} center`,
+      fontWeight: "var(--oh-shimmer-weight, inherit)",
       WebkitBackgroundClip: "text",
       backgroundClip: "text",
       color: "transparent",
@@ -64,7 +68,11 @@ function TextShimmerComponent({
     return (
       <Component
         className={cn("text-[var(--oh-muted)]", className)}
-        style={style}
+        style={{
+          ...style,
+          color: "var(--oh-shimmer-base, var(--oh-muted))",
+          fontWeight: "var(--oh-shimmer-weight, inherit)",
+        }}
         {...rest}
       >
         {children}
@@ -76,7 +84,7 @@ function TextShimmerComponent({
     <>
       <style
         dangerouslySetInnerHTML={{
-          __html: `@keyframes ${animationName}{0%{background-position:${sweepStart}% center}80%,100%{background-position:${sweepEnd}% center}}`,
+          __html: `@keyframes ${animationName}{0%{background-position:${sweepStart} center}80%,100%{background-position:${sweepEnd} center}}`,
         }}
       />
       <Component

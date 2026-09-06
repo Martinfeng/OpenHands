@@ -29,7 +29,9 @@ describe("TextShimmer", () => {
     expect(shimmer.style.backgroundImage).toContain("var(--oh-muted)");
     expect(shimmer.style.backgroundSize).toBe("200% 100%");
     // Text remains painted when the moving highlight is outside its bounds.
-    expect(shimmer.style.backgroundColor).toBe("var(--oh-muted)");
+    expect(shimmer.style.backgroundColor).toBe(
+      "var(--oh-shimmer-base, var(--oh-muted))",
+    );
     expect(shimmer.style.animation).toContain("oh-text-shimmer-");
   });
   it("keeps the title readable and static for reduced motion", () => {
