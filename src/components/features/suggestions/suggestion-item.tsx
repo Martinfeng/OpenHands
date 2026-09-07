@@ -19,13 +19,25 @@ export function SuggestionItem({ suggestion, onClick }: SuggestionItemProps) {
   const itemIcon = useMemo(() => {
     switch (suggestion.label) {
       case "INCREASE_TEST_COVERAGE":
-        return <TachometerFastIcon width={24} height={24} color="#fff" />;
+        return (
+          <TachometerFastIcon
+            width={24}
+            height={24}
+            color="var(--oh-foreground)"
+          />
+        );
       case "AUTO_MERGE_PRS":
-        return <PrStatusIcon width={19} height={20} color="#fff" />;
+        return (
+          <PrStatusIcon width={19} height={20} color="var(--oh-foreground)" />
+        );
       case "FIX_README":
-        return <DocumentIcon width={24} height={24} color="#fff" />;
+        return (
+          <DocumentIcon width={24} height={24} color="var(--oh-foreground)" />
+        );
       case "CLEAN_DEPENDENCIES":
-        return <WaterIcon width={24} height={24} color="#fff" />;
+        return (
+          <WaterIcon width={24} height={24} color="var(--oh-foreground)" />
+        );
       default:
         return null;
     }

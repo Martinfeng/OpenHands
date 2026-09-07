@@ -17,9 +17,14 @@ describe("ToggleSwitch", () => {
   });
 
   it("reflects enabled state via aria-checked", () => {
-    render(<ToggleSwitch enabled label="Toggle test" onToggle={vi.fn()} />);
+    const { container } = render(
+      <ToggleSwitch enabled label="Toggle test" onToggle={vi.fn()} />,
+    );
 
     expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "true");
+    const track = container.querySelector('[aria-hidden="true"]');
+    expect(track?.className).toContain("bg-[var(--oh-accent)]");
+    expect(track?.className).not.toContain("bg-white");
   });
 
   it("stops event propagation on click", async () => {

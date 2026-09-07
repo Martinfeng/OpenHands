@@ -95,7 +95,7 @@ function UpdateCommandTabs() {
             className={cn(
               "inline-flex items-center gap-1.5 px-3 pb-2 text-sm font-medium",
               selectedTab === tab
-                ? "border-b border-white text-foreground"
+                ? "border-b border-foreground text-foreground"
                 : "text-[var(--oh-muted)] hover:text-foreground",
             )}
           >

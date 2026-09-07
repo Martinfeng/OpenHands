@@ -365,11 +365,12 @@ button.extension-module-card-interactive {
   padding-top: 2rem;
 }
 
+.drag-over-content,
 .drag-over-ui-content {
   font-size: 16px;
   font-weight: 400;
   line-height: 20px;
-  color: #fff;
+  color: var(--oh-foreground);
 }
 
 /* File preview styles */

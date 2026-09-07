@@ -17,7 +17,7 @@ export function ToggleSwitchVisual({
         "relative inline-flex h-[22px] w-[40px] shrink-0 items-center rounded-full border",
         "transition-colors duration-200 ease-in-out motion-reduce:transition-none",
         enabled
-          ? "border-white bg-white"
+          ? "border-[var(--oh-accent)] bg-[var(--oh-accent)]"
           : "border-[var(--oh-border)] bg-surface-raised",
         className,
       )}
@@ -27,7 +27,7 @@ export function ToggleSwitchVisual({
           "inline-block size-4 rounded-full",
           "transition-transform duration-200 ease-in-out motion-reduce:transition-none",
           enabled
-            ? "translate-x-[21px] bg-base-secondary"
+            ? "translate-x-[21px] bg-[var(--oh-accent-foreground)]"
             : "translate-x-[2px] bg-[var(--oh-muted)]",
         )}
       />

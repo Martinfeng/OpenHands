@@ -94,7 +94,7 @@ export function CirclePlusCheckToggle({
           isSelected &&
             (showRemoveIcon
               ? "border-0 bg-[rgba(248,113,113,0.14)] text-[#ef4444] hover:bg-[rgba(248,113,113,0.24)]"
-              : "border border-white bg-transparent text-foreground [&_path]:fill-current"),
+              : "border border-foreground bg-transparent text-foreground [&_path]:fill-current"),
           !isSelected &&
             "border-0 bg-surface-raised text-foreground hover:bg-[var(--oh-interactive-hover)]",
           isDisabled && "cursor-not-allowed opacity-50",

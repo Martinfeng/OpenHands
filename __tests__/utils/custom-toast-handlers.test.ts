@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import {
   displaySuccessToast,
   displayErrorToast,
+  TOAST_OPTIONS,
 } from "#/utils/custom-toast-handlers";
 
 const { toastMock } = vi.hoisted(() => ({
@@ -22,6 +23,15 @@ vi.mock("react-hot-toast", () => ({
 describe("custom-toast-handlers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("uses semantic toast colors so light appearance keeps contrast", () => {
+    expect(TOAST_OPTIONS.style).toEqual(
+      expect.objectContaining({
+        background: "var(--oh-color-tertiary)",
+        color: "var(--oh-foreground)",
+      }),
+    );
   });
 
   describe("displaySuccessToast", () => {
