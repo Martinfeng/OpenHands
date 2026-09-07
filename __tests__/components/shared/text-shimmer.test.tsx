@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import {
-  shimmerCycleSeconds,
+  SHIMMER_CYCLE_SECONDS,
   TextShimmer,
 } from "#/components/shared/text-shimmer";
 
@@ -42,11 +42,18 @@ describe("TextShimmer", () => {
     expect(keyframes).not.toMatch(/78%,100%/);
   });
 
-  it("scales the cycle with title width so short labels are not a 3s wash", () => {
-    expect(shimmerCycleSeconds(36)).toBeLessThan(1.6);
-    expect(shimmerCycleSeconds(36)).toBeGreaterThan(1);
-    expect(shimmerCycleSeconds(36)).toBeLessThan(shimmerCycleSeconds(220));
-    expect(shimmerCycleSeconds(220)).toBeLessThan(2.4);
+  it("keeps one two-second loop so short titles move slower than long ones", () => {
+    render(
+      <>
+        <TextShimmer data-testid="short">Hi</TextShimmer>
+        <TextShimmer data-testid="long">
+          Running a much longer command title
+        </TextShimmer>
+      </>,
+    );
+    expect(SHIMMER_CYCLE_SECONDS).toBe(2);
+    expect(screen.getByTestId("short").style.animation).toContain(" 2s ");
+    expect(screen.getByTestId("long").style.animation).toContain(" 2s ");
   });
   it("keeps the title readable and static for reduced motion", () => {
     motionPreference.reduce = true;

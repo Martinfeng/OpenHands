@@ -1,4 +1,4 @@
-import React, { useId, useLayoutEffect, useMemo, useState } from "react";
+import React, { useId, useMemo } from "react";
 import { useReducedMotion } from "framer-motion";
 import { cn } from "#/utils/utils";
 
@@ -6,27 +6,16 @@ import { cn } from "#/utils/utils";
  * A single highlight crosses the current response title. Body text never uses
  * this component and reduced-motion users see a static label.
  *
- * The band is sized in `ch` (~5 Latin characters / Codex TUI half-width) so
- * the glint reads as a soft sheet, not a hairline. The gradient is 3.6× the
- * text width so it fully leaves the glyphs before wrapping — same loop shape
- * as OpenCode TextShimmer (`background-size: 360%`, `--spread: 5.2ch`) and
- * Codex TUI (`band_half_width = 5`, padding on both sides). No hold at the
- * end of a cycle.
+ * Timing matches Codex TUI (`sweep_seconds = 2`): one loop is always two
+ * seconds, so a short label like「正在思考」reads slower and a long tool
+ * title reads faster. The band is `5.2ch` (OpenCode/Codex half-width). The
+ * gradient is 3.6× the text width so the glint fully leaves the glyphs
+ * before wrapping. No hold at the end of a cycle.
  */
 const SHIMMER_BACKGROUND_SIZE = "360%";
 const SHIMMER_BAND_CH = 5.2;
-const SHIMMER_MIN_SWEEP_SECONDS = 1.2;
-const SHIMMER_MAX_SWEEP_SECONDS = 2;
-const SHIMMER_PIXELS_PER_SECOND = 72;
 const SHIMMER_DELAY_SECONDS = 0.1;
-
-export function shimmerCycleSeconds(widthPx: number): number {
-  const travel = Number.isFinite(widthPx) ? Math.max(widthPx, 0) : 0;
-  return Math.min(
-    SHIMMER_MAX_SWEEP_SECONDS,
-    Math.max(SHIMMER_MIN_SWEEP_SECONDS, travel / SHIMMER_PIXELS_PER_SECOND),
-  );
-}
+export const SHIMMER_CYCLE_SECONDS = 2;
 
 export type TextShimmerProps = {
   children: React.ReactNode;
@@ -48,30 +37,7 @@ function TextShimmerComponent({
   const reduceMotion = useReducedMotion();
   const reactId = useId();
   const animationName = `oh-text-shimmer-${reactId.replace(/:/g, "")}`;
-  const [node, setNode] = useState<HTMLElement | null>(null);
-  const [measuredDuration, setMeasuredDuration] = useState(() =>
-    shimmerCycleSeconds(48),
-  );
-
-  useLayoutEffect(() => {
-    if (duration != null || !node) {
-      return undefined;
-    }
-    const update = () => {
-      setMeasuredDuration(
-        shimmerCycleSeconds(node.getBoundingClientRect().width),
-      );
-    };
-    update();
-    if (typeof ResizeObserver === "undefined") {
-      return undefined;
-    }
-    const observer = new ResizeObserver(update);
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [children, duration, node]);
-
-  const cycleSeconds = duration ?? measuredDuration;
+  const cycleSeconds = duration ?? SHIMMER_CYCLE_SECONDS;
   const band = `${SHIMMER_BAND_CH * spread}ch`;
   const sweepStart = "100%";
   const sweepEnd = "0%";
@@ -122,7 +88,6 @@ function TextShimmerComponent({
         }}
       />
       <Component
-        ref={setNode}
         className={cn("oh-text-shimmer relative inline-block", className)}
         style={shimmerStyle}
         {...rest}
