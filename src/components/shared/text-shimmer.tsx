@@ -6,14 +6,15 @@ import { cn } from "#/utils/utils";
  * A single highlight crosses the current response title. Body text never uses
  * this component and reduced-motion users see a static label.
  *
- * The band is sized in `em` so two- or three-character titles still keep a
- * darker base beside the highlight. The gradient is 3.6× the text width so the
- * glint fully leaves the glyphs before wrapping — same loop shape as OpenCode's
- * TextShimmer (`background-size: 360%`) and Codex TUI (`padding` on both sides
- * of the string). There is no hold at the end of a cycle.
+ * The band is sized in `ch` (~5 Latin characters / Codex TUI half-width) so
+ * the glint reads as a soft sheet, not a hairline. The gradient is 3.6× the
+ * text width so it fully leaves the glyphs before wrapping — same loop shape
+ * as OpenCode TextShimmer (`background-size: 360%`, `--spread: 5.2ch`) and
+ * Codex TUI (`band_half_width = 5`, padding on both sides). No hold at the
+ * end of a cycle.
  */
 const SHIMMER_BACKGROUND_SIZE = "360%";
-const SHIMMER_BAND_EM = 0.58;
+const SHIMMER_BAND_CH = 5.2;
 const SHIMMER_MIN_SWEEP_SECONDS = 1.2;
 const SHIMMER_MAX_SWEEP_SECONDS = 2;
 const SHIMMER_PIXELS_PER_SECOND = 72;
@@ -71,7 +72,7 @@ function TextShimmerComponent({
   }, [children, duration, node]);
 
   const cycleSeconds = duration ?? measuredDuration;
-  const band = `${SHIMMER_BAND_EM * spread}em`;
+  const band = `${SHIMMER_BAND_CH * spread}ch`;
   const sweepStart = "100%";
   const sweepEnd = "0%";
 
@@ -79,7 +80,7 @@ function TextShimmerComponent({
     const base = "var(--oh-shimmer-base, var(--oh-muted))";
     const highlight = "var(--oh-shimmer-highlight, var(--oh-foreground))";
     const halfWidth = `${band} * var(--oh-shimmer-spread, 1)`;
-    const core = "var(--oh-shimmer-core, 0.16em)";
+    const core = "var(--oh-shimmer-core, 1.2ch)";
     return {
       ...style,
       backgroundColor: base,

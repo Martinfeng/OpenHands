@@ -28,7 +28,7 @@ describe("TextShimmer", () => {
     const shimmer = screen.getByTestId("shimmer");
     expect(shimmer.style.backgroundImage).toContain("linear-gradient");
     expect(shimmer.style.backgroundImage).not.toContain("repeating");
-    expect(shimmer.style.backgroundImage).toMatch(/50% - 0\.58em/);
+    expect(shimmer.style.backgroundImage).toMatch(/50% - 5\.2ch/);
     expect(shimmer.style.backgroundImage).not.toMatch(/50% - \d+(\.\d+)?%/);
     expect(shimmer.style.backgroundSize).toBe("360% 100%");
     expect(shimmer.style.backgroundColor).toBe(
