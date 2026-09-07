@@ -35,7 +35,65 @@ export const APPEARANCE_PALETTES = {
   },
 } as const;
 
-export function appearanceVariables(appearance: ResolvedAppearance) {
+function hexToHslChannels(hex: string): string {
+  const raw = hex.replace("#", "");
+  const r = Number.parseInt(raw.slice(0, 2), 16) / 255;
+  const g = Number.parseInt(raw.slice(2, 4), 16) / 255;
+  const b = Number.parseInt(raw.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  let h = 0;
+  let s = 0;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) h = (g - b) / d + (g < b ? 6 : 0);
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h /= 6;
+  }
+  const hue = Math.round(h * 36000) / 100;
+  const sat = Math.round(s * 10000) / 100;
+  const lit = Math.round(l * 10000) / 100;
+  return `${hue} ${sat}% ${lit}%`;
+}
+
+export function heroAppearanceCssVariables(
+  appearance: ResolvedAppearance,
+): Record<string, string> {
+  const colors = heroAppearanceColors(appearance);
+  const vars: Record<string, string> = {
+    "--heroui-focus": hexToHslChannels(colors.focus),
+    "--heroui-primary": hexToHslChannels(colors.primary.DEFAULT),
+    "--heroui-primary-foreground": hexToHslChannels(colors.primary.foreground),
+    "--heroui-background": hexToHslChannels(colors.background.DEFAULT),
+    "--heroui-background-foreground": hexToHslChannels(
+      colors.background.foreground,
+    ),
+    "--heroui-foreground": hexToHslChannels(colors.foreground.DEFAULT),
+  };
+  for (const key of ["content1", "content2", "content3", "content4"] as const) {
+    vars[`--heroui-${key}`] = hexToHslChannels(colors[key].DEFAULT);
+    vars[`--heroui-${key}-foreground`] = hexToHslChannels(
+      colors[key].foreground,
+    );
+  }
+  for (const [step, value] of Object.entries(colors.default)) {
+    const name =
+      step === "DEFAULT"
+        ? "default"
+        : step === "foreground"
+          ? "default-foreground"
+          : `default-${step}`;
+    vars[`--heroui-${name}`] = hexToHslChannels(value);
+  }
+  return vars;
+}
+
+export function appearanceVariables(
+  appearance: ResolvedAppearance,
+): Record<string, string> {
   return {
     ...Object.fromEntries(
       Object.entries(APPEARANCE_PALETTES[appearance]).map(([step, value]) => [
@@ -43,6 +101,7 @@ export function appearanceVariables(appearance: ResolvedAppearance) {
         value,
       ]),
     ),
+    ...heroAppearanceCssVariables(appearance),
     "--oh-color-primary": "#3478f6",
     "--oh-accent": "#3478f6",
     "--oh-accent-foreground": "#ffffff",

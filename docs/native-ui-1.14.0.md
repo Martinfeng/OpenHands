@@ -17,7 +17,7 @@
 ## 使用与实现
 
 - 在设置 → Application → Color theme 中选择浅色、深色或跟随系统。独立应用默认跟随系统，偏好保存在 `localStorage["openhands-appearance"]`。Electron 同步原生窗口颜色，并在自身用户目录保存启动外观。
-- 颜色通过语义变量覆盖主要页面、菜单、输入框、弹层、Markdown、代码、Monaco/Diff 和终端。系统字体优先使用 macOS 字体，蓝色用于主要操作与焦点。
+- 颜色通过语义变量覆盖主要页面、菜单、输入框、弹层、Markdown、代码、Monaco/Diff 和终端。HeroUI 下拉层传送到 `body`，因此 `--heroui-*` 也写在外观根上，浅色模式的弹出菜单才能继承浅色底和深色字。系统字体优先使用 macOS 字体，蓝色用于主要操作与焦点。
 - 同一轮回复采用较紧凑的间距：Agent 文本块上边距为 8px，工具和思考区块保留 4px 内边距并去除重复外边距，配合消息列表的 8px 间隔形成约 12px 的说明到操作间距、约 20px 的操作到下一阶段间距。用户消息保留 24px 上边距，区分不同轮对话；正文行距不变。
 - 嵌入组件仍由 `AgentServerUIProviders` / `AgentServerUIRoot` 的 `theme`、`styleOverrides` 和 `style` 控制，宿主覆盖优先于默认变量；独立应用的本地主题选择不会接管嵌入组件。
 - 独立应用的 `body` 显式使用 `color: var(--oh-foreground)`，避免浅色模式继续继承上层已解析的深色文字色。此处使用内联语义变量，因为构建后的文字颜色工具类只匹配作用域内的后代，不能匹配 `body` 作用域根本身。

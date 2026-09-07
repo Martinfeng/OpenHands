@@ -182,7 +182,7 @@ export function ModelSelector({
           selectedKey={selectedProvider}
           classNames={{
             popoverContent:
-              "bg-content1 rounded-xl border border-[var(--oh-border)]",
+              "bg-content1 text-foreground rounded-xl border border-[var(--oh-border)]",
             selectorButton: heroUiAutocompleteSelectorButtonClassName,
           }}
           selectorButtonProps={{ disableRipple: true }}
@@ -254,7 +254,7 @@ export function ModelSelector({
             defaultSelectedKey={selectedModel ?? undefined}
             classNames={{
               popoverContent:
-                "bg-content1 rounded-xl border border-[var(--oh-border)]",
+                "bg-content1 text-foreground rounded-xl border border-[var(--oh-border)]",
               selectorButton: heroUiAutocompleteSelectorButtonClassName,
             }}
             selectorButtonProps={{ disableRipple: true }}
