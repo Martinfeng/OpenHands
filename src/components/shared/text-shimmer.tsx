@@ -1,14 +1,31 @@
-import React, { useId, useMemo } from "react";
+import React, { useId, useLayoutEffect, useMemo, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import { cn } from "#/utils/utils";
 
 /**
- * A single neutral highlight crosses the current response title. Body text
- * never uses this component and reduced-motion users see a static label.
+ * A single highlight crosses the current response title. Body text never uses
+ * this component and reduced-motion users see a static label.
+ *
+ * The band is sized in `em` so two- or three-character titles still keep a
+ * darker base beside the highlight. Cycle time follows the painted width so a
+ * short label is not a 3s wash of one color.
  */
 const SHIMMER_BACKGROUND_SIZE = "200%";
-/** Gradient period as a percentage of the (oversized) background image. */
-const SHIMMER_PERIOD = 100;
+const SHIMMER_BAND_EM = 0.58;
+const SHIMMER_SWEEP_PORTION = 0.78;
+const SHIMMER_MIN_SWEEP_SECONDS = 0.95;
+const SHIMMER_MAX_SWEEP_SECONDS = 1.7;
+const SHIMMER_PIXELS_PER_SECOND = 72;
+const SHIMMER_DELAY_SECONDS = 0.1;
+
+export function shimmerCycleSeconds(widthPx: number): number {
+  const travel = Number.isFinite(widthPx) ? Math.max(widthPx, 0) : 0;
+  const sweep = Math.min(
+    SHIMMER_MAX_SWEEP_SECONDS,
+    Math.max(SHIMMER_MIN_SWEEP_SECONDS, travel / SHIMMER_PIXELS_PER_SECOND),
+  );
+  return sweep / SHIMMER_SWEEP_PORTION;
+}
 
 export type TextShimmerProps = {
   children: React.ReactNode;
@@ -22,35 +39,51 @@ function TextShimmerComponent({
   children,
   as: Component = "p",
   className,
-  duration = 3,
-  spread = 12,
+  duration,
+  spread = 1,
   style,
   ...rest
 }: TextShimmerProps) {
   const reduceMotion = useReducedMotion();
   const reactId = useId();
   const animationName = `oh-text-shimmer-${reactId.replace(/:/g, "")}`;
-
-  // Wider spread => wider bright band within each repeating period.
-  const bandHalfWidth = useMemo(
-    () => Math.min(SHIMMER_PERIOD / 2 - 1, 1 + spread / 2),
-    [spread],
+  const [node, setNode] = useState<HTMLElement | null>(null);
+  const [measuredDuration, setMeasuredDuration] = useState(() =>
+    shimmerCycleSeconds(48),
   );
-  // With a 2x background, 100% puts the highlight center at the left edge
-  // and 0% puts it at the right. Start/end just outside those edges so the
-  // sweep spends its time crossing the text, rather than travelling offscreen.
-  const sweepStart = `calc(100% + ${bandHalfWidth * 2}% * var(--oh-shimmer-spread, 1))`;
-  const sweepEnd = `calc(-${bandHalfWidth * 2}% * var(--oh-shimmer-spread, 1))`;
+
+  useLayoutEffect(() => {
+    if (duration != null || !node) {
+      return undefined;
+    }
+    const update = () => {
+      setMeasuredDuration(
+        shimmerCycleSeconds(node.getBoundingClientRect().width),
+      );
+    };
+    update();
+    if (typeof ResizeObserver === "undefined") {
+      return undefined;
+    }
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [children, duration, node]);
+
+  const cycleSeconds = duration ?? measuredDuration;
+  const band = `${SHIMMER_BAND_EM * spread}em`;
+  const sweepStart = `calc(100% + ${band})`;
+  const sweepEnd = `calc(0% - ${band})`;
 
   const shimmerStyle = useMemo(() => {
-    const center = SHIMMER_PERIOD / 2;
     const base = "var(--oh-shimmer-base, var(--oh-muted))";
     const highlight = "var(--oh-shimmer-highlight, var(--oh-foreground))";
-    const halfWidth = `${bandHalfWidth}% * var(--oh-shimmer-spread, 1)`;
+    const halfWidth = `${band} * var(--oh-shimmer-spread, 1)`;
+    const core = "var(--oh-shimmer-core, 0.16em)";
     return {
       ...style,
       backgroundColor: base,
-      backgroundImage: `linear-gradient(105deg, ${base} 0%, ${base} calc(${center}% - ${halfWidth}), ${highlight} calc(${center}% - var(--oh-shimmer-core, 0%)), ${highlight} calc(${center}% + var(--oh-shimmer-core, 0%)), ${base} calc(${center}% + ${halfWidth}), ${base} 100%)`,
+      backgroundImage: `linear-gradient(105deg, ${base} 0%, ${base} calc(50% - ${halfWidth}), ${highlight} calc(50% - ${core}), ${highlight} calc(50% + ${core}), ${base} calc(50% + ${halfWidth}), ${base} 100%)`,
       backgroundSize: `${SHIMMER_BACKGROUND_SIZE} 100%`,
       backgroundRepeat: "no-repeat",
       backgroundPosition: `${sweepStart} center`,
@@ -59,10 +92,10 @@ function TextShimmerComponent({
       backgroundClip: "text",
       color: "transparent",
       WebkitTextFillColor: "transparent",
-      animation: `${animationName} ${duration}s linear infinite`,
-      animationDelay: "0.15s",
+      animation: `${animationName} ${cycleSeconds}s linear infinite`,
+      animationDelay: `${SHIMMER_DELAY_SECONDS}s`,
     } as React.CSSProperties;
-  }, [animationName, bandHalfWidth, duration, style, sweepStart]);
+  }, [animationName, band, cycleSeconds, style, sweepStart]);
 
   if (reduceMotion) {
     return (
@@ -80,14 +113,17 @@ function TextShimmerComponent({
     );
   }
 
+  const sweepPercent = Math.round(SHIMMER_SWEEP_PORTION * 100);
+
   return (
     <>
       <style
         dangerouslySetInnerHTML={{
-          __html: `@keyframes ${animationName}{0%{background-position:${sweepStart} center}80%,100%{background-position:${sweepEnd} center}}`,
+          __html: `@keyframes ${animationName}{0%{background-position:${sweepStart} center}${sweepPercent}%,100%{background-position:${sweepEnd} center}}`,
         }}
       />
       <Component
+        ref={setNode}
         className={cn("oh-text-shimmer relative inline-block", className)}
         style={shimmerStyle}
         {...rest}

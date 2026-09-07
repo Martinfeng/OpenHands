@@ -130,11 +130,13 @@ test.describe("native UI with Agent Server 1.42.1", () => {
       await approve.click();
       expect((await decision).postDataJSON()).toEqual({ accept: true });
       await expect(page.locator(".oh-text-shimmer")).toHaveCount(1);
-      expect(
+      const lightDuration = parseFloat(
         await page
           .locator(".oh-text-shimmer")
           .evaluate((el) => getComputedStyle(el).animationDuration),
-      ).toBe("3s");
+      );
+      expect(lightDuration).toBeGreaterThanOrEqual(1);
+      expect(lightDuration).toBeLessThan(2.5);
       await expect(page.locator(".oh-text-shimmer")).toHaveCSS(
         "font-weight",
         "500",
@@ -155,10 +157,13 @@ test.describe("native UI with Agent Server 1.42.1", () => {
         "background-image",
         /rgb\(255, 255, 255\)/,
       );
-      await expect(page.locator(".oh-text-shimmer")).toHaveCSS(
-        "animation-duration",
-        "3s",
+      const darkDuration = parseFloat(
+        await page
+          .locator(".oh-text-shimmer")
+          .evaluate((el) => getComputedStyle(el).animationDuration),
       );
+      expect(darkDuration).toBeGreaterThanOrEqual(1);
+      expect(darkDuration).toBeLessThan(2.5);
       await page
         .getByTestId("live-activity-chip")
         .screenshot({ path: testInfo.outputPath("dark-shimmer-title.png") });
