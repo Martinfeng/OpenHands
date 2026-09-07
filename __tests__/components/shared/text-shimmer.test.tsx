@@ -30,12 +30,16 @@ describe("TextShimmer", () => {
     expect(shimmer.style.backgroundImage).not.toContain("repeating");
     expect(shimmer.style.backgroundImage).toMatch(/50% - 0\.58em/);
     expect(shimmer.style.backgroundImage).not.toMatch(/50% - \d+(\.\d+)?%/);
-    expect(shimmer.style.backgroundSize).toBe("200% 100%");
+    expect(shimmer.style.backgroundSize).toBe("360% 100%");
     expect(shimmer.style.backgroundColor).toBe(
       "var(--oh-shimmer-base, var(--oh-muted))",
     );
     expect(shimmer.style.animation).toContain("oh-text-shimmer-");
     expect(parseFloat(shimmer.style.animation.split(" ")[1])).toBeLessThan(2);
+    const keyframes = shimmer.previousElementSibling?.textContent ?? "";
+    expect(keyframes).toMatch(/0%\{background-position:100% center\}/);
+    expect(keyframes).toMatch(/100%\{background-position:0% center\}/);
+    expect(keyframes).not.toMatch(/78%,100%/);
   });
 
   it("scales the cycle with title width so short labels are not a 3s wash", () => {
