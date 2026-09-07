@@ -47,10 +47,17 @@ function getStatusText(blocked: boolean, success: boolean): string {
   return "failed";
 }
 
-function getStatusClassName(blocked: boolean, success: boolean): string {
-  if (blocked) return "bg-amber-900/50 text-amber-300";
-  if (success) return "bg-green-900/50 text-green-300";
-  return "bg-red-900/50 text-red-300";
+export function hookStatusBadgeClassName(
+  blocked: boolean,
+  success: boolean,
+): string {
+  if (blocked) {
+    return "bg-[color-mix(in_srgb,var(--oh-warning)_16%,transparent)] text-[var(--oh-warning)]";
+  }
+  if (success) {
+    return "bg-[color-mix(in_srgb,var(--oh-success)_16%,transparent)] text-[var(--oh-success)]";
+  }
+  return "bg-[color-mix(in_srgb,var(--oh-status-error)_16%,transparent)] text-[var(--oh-status-error)]";
 }
 
 export function HookExecutionEventMessage({
@@ -64,7 +71,10 @@ export function HookExecutionEventMessage({
 
   const icon = getHookIcon(event.hook_event_type, event.blocked);
   const statusText = getStatusText(event.blocked, event.success);
-  const statusClassName = getStatusClassName(event.blocked, event.success);
+  const statusClassName = hookStatusBadgeClassName(
+    event.blocked,
+    event.success,
+  );
 
   // Determine the overall success indicator for GenericEventMessage.
   // When blocked, suppress the success indicator entirely — the amber "blocked"
@@ -81,7 +91,12 @@ export function HookExecutionEventMessage({
       {event.tool_name && (
         <span className="text-[var(--oh-muted)] ml-2">({event.tool_name})</span>
       )}
-      <span className={cn("ml-2 px-1 py-0.5 rounded text-xs", statusClassName)}>
+      <span
+        className={cn(
+          "ml-2 px-1.5 py-0.5 rounded-md text-xs font-medium",
+          statusClassName,
+        )}
+      >
         {statusText}
       </span>
     </span>
