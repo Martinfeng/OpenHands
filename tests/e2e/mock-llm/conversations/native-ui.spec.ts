@@ -143,7 +143,7 @@ test.describe("native UI with Agent Server 1.42.1", () => {
       );
       await expect(page.locator(".oh-text-shimmer")).toHaveCSS(
         "background-image",
-        /rgb\(8, 10, 13\)/,
+        /rgb\(255, 255, 255\)/,
       );
       await page
         .getByTestId("live-activity-chip")

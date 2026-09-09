@@ -108,7 +108,7 @@ export function appearanceVariables(
     "--oh-link": appearance === "light" ? "#2463d4" : "#8cb6ff",
     "--oh-focus": "#3478f6",
     "--oh-shimmer-base": appearance === "light" ? "#555b65" : "#a3aab5",
-    "--oh-shimmer-highlight": appearance === "light" ? "#080a0d" : "#ffffff",
+    "--oh-shimmer-highlight": "#ffffff",
     "--oh-shimmer-spread": "1",
     "--oh-shimmer-core": "1.2ch",
     "--oh-shimmer-weight": "500",
