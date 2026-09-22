@@ -3,6 +3,7 @@ import { ExtraProps } from "react-markdown";
 import { useCodeTheme } from "#/themes/use-code-theme";
 import { CopyableContentWrapper } from "#/components/shared/buttons/copyable-content-wrapper";
 import { cn } from "#/utils/utils";
+import { MermaidDiagram, MERMAID_FENCE_LANGUAGE } from "./mermaid-diagram";
 import { SyntaxHighlighter } from "./syntax-highlighter";
 
 // See https://github.com/remarkjs/react-markdown?tab=readme-ov-file#use-custom-components-syntax-highlight
@@ -19,6 +20,10 @@ export function MarkdownCode({
   const theme = useCodeTheme();
   const match = /language-(\w+)/.exec(className || ""); // get the language
   const codeString = String(children).replace(/\n$/, "");
+
+  if (match?.[1]?.toLowerCase() === MERMAID_FENCE_LANGUAGE) {
+    return <MermaidDiagram source={codeString} />;
+  }
 
   if (!match) {
     const isMultiline = String(children).includes("\n");

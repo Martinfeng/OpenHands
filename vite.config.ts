@@ -83,6 +83,13 @@ const appBuildConfig = {
             test: /node_modules[\\/](echarts|zrender)[\\/]/,
           },
           {
+            // Mermaid's layout packages initialize across module boundaries.
+            // Keep that lazy diagram runtime in one chunk. Katex stays out
+            // because math rendering already loads it on the chat path.
+            name: "vendor-mermaid",
+            test: /node_modules[\\/](mermaid|@mermaid-js|elkjs|cytoscape|dagre-d3-es|d3|roughjs|khroma|chevrotain|@iconify|@upsetjs|@braintree[\\/]sanitize-url)[\\/]/,
+          },
+          {
             name: "vendor",
             test: /node_modules[\\/]/,
             maxSize: APP_CHUNK_MAX_BYTES,

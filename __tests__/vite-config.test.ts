@@ -54,13 +54,16 @@ describe("vite app build", () => {
       };
     };
 
-    expect(appBuild.build?.rolldownOptions?.output?.codeSplitting?.groups).toEqual(
+    expect(
+      appBuild.build?.rolldownOptions?.output?.codeSplitting?.groups,
+    ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           name: "vendor",
           maxSize: 450 * 1024,
           entriesAware: true,
         }),
+        expect.objectContaining({ name: "vendor-mermaid" }),
       ]),
     );
   });

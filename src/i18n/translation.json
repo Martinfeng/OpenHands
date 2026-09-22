@@ -39438,5 +39438,22 @@
     "ca": "Cada {{count}}s",
     "tr": "Her {{count}}sn",
     "uk": "Кожні {{count}} с"
+  },
+  "MERMAID$DIAGRAM": {
+    "en": "Mermaid diagram",
+    "ja": "Mermaid 図",
+    "zh-CN": "Mermaid 图",
+    "zh-TW": "Mermaid 圖",
+    "ko-KR": "Mermaid 다이어그램",
+    "no": "Mermaid-diagram",
+    "ar": "مخطط Mermaid",
+    "de": "Mermaid-Diagramm",
+    "fr": "Diagramme Mermaid",
+    "es": "Diagrama Mermaid",
+    "it": "Diagramma Mermaid",
+    "pt": "Diagrama Mermaid",
+    "ca": "Diagrama Mermaid",
+    "tr": "Mermaid diyagramı",
+    "uk": "Діаграма Mermaid"
   }
 }
